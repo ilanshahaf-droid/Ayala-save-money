@@ -135,6 +135,25 @@ h2{font-size:15px;font-weight:600;color:var(--muted);margin:22px 0 8px}
 .total .amt{font-size:18px}
 .hint{font-size:14px;color:var(--muted);margin:-4px 0 14px}
 .brick{width:1.15em;height:1.15em;vertical-align:-.2em;display:inline-block}
+.walk{background:var(--paper);border:1.5px solid var(--line);border-radius:16px;padding:14px;margin-bottom:22px}
+.walk .wh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.walk .wh b{font-size:17px}
+.walk .nav{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--muted)}
+.walk .nav button{border:1.5px solid var(--line);background:var(--bg);border-radius:999px;width:30px;height:30px;line-height:1;font-size:16px}
+.walk .nav button:disabled{opacity:.35}
+.days{display:flex;gap:6px;justify-content:space-between}
+.day{flex:1;max-width:56px;aspect-ratio:1;border-radius:14px;border:1.5px dashed var(--line);background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:600;font-size:15px;gap:1px;padding:0}
+.day small{font-weight:400;font-size:11px;color:var(--muted)}
+.day.on{background:var(--mint);border:1.5px solid var(--mint);color:#fff}
+.day.on small{color:#fff;opacity:.85}
+.day:disabled{cursor:default}
+.day.future{opacity:.4}
+.day.off{background:var(--paper);border:1.5px solid var(--line);color:var(--muted)}
+.walkbar{height:10px;border-radius:99px;background:var(--bg);overflow:hidden;margin:12px 0 6px}
+.walkbar i{display:block;height:100%;border-radius:99px;background:var(--mint);transition:width .3s}
+.walk .ws{font-size:14px;color:var(--muted);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.walk .ws span:last-child{white-space:nowrap}
+.walk .ws b{color:var(--mint)}
 .toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:999px;font-size:15px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
 .toast.on{opacity:1}
 .coin{animation:drop .6s cubic-bezier(.3,1.4,.6,1)}
@@ -408,7 +427,7 @@ function jarSVG(fill){
 
 function txRow(t, N, isP, ro){
   const cat = t.cat ? CATS.find(c=>c[1]===t.cat) : null;
-  const ic = t.type==='allowance'?'🪙':t.type==='bonus'?'⭐':t.type==='gift'?'🎁':t.type==='request'?'🙋':t.type==='start'?'🏦':t.type==='take'?'↩':(cat?cat[0]:'🛍️');
+  const ic = t.walk?'🚶':t.type==='allowance'?'🪙':t.type==='bonus'?'⭐':t.type==='gift'?'🎁':t.type==='request'?'🙋':t.type==='start'?'🏦':t.type==='take'?'↩':(cat?cat[0]:'🛍️');
   const title = t.note || (t.type==='allowance'?'דמי כיס':t.type==='spend'?(t.cat||'הוצאה'):'');
   const by = t.by==='parent'?N.parent:N.child;
   const canDel = !ro && (isP || t.by==='child');
@@ -443,7 +462,7 @@ function detailsHTML(N, isP, ro){
   inRange.forEach(t=>{
     if(t.type==='start') return;
     if(t.amount > 0){
-      const [ic,label] = IN_TYPES[t.type] || ['➕','אחר'];
+      const [ic,label] = t.walk ? ['🚶','בונוס הליכה לבית הספר'] : (IN_TYPES[t.type] || ['➕','אחר']);
       const g = inc[label] || (inc[label] = {ic,label,sum:0,n:0}); g.sum += t.amount; g.n++; tin += t.amount;
     } else if(t.amount < 0){
       let ic, label;
@@ -468,6 +487,82 @@ function detailsHTML(N, isP, ro){
     <div class="total"><h2>כל התנועות</h2></div>
     <div class="seg" style="margin-top:0">${[['all','הכול'],['in','נכנס'],['out','יצא']].map(([k,l])=>`<button class="chip ${det.filter===k?'on':''}" data-flt="${k}">${l}</button>`).join('')}</div>
     <div class="list" style="margin-top:10px">${list.slice(0,200).map(t=>txRow(t,N,isP,ro)).join('') || '<div class="empty">אין תנועות בתקופה הזאת</div>'}</div>`;
+}
+
+/* ---------- school walk bonus ---------- */
+const DSHORT = ['א','ב','ג','ד','ה','ו','ש'];
+const WALK_NAME = 'בונוס הליכה לבית הספר';
+let walkWeek = 0; // 0 = this week, -1 = last week...
+function ymd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+function walkCfg(st){
+  st = st || {};
+  const days = Array.isArray(st.walkDays) && st.walkDays.length ? st.walkDays.map(Number).sort() : [0,1,2,3,4];
+  return { on: st.walkOn !== false, days, bonus: st.walkBonus == null ? 5 : +st.walkBonus,
+    walks: new Set(Array.isArray(st.walks) ? st.walks : []), off: new Set(Array.isArray(st.noSchool) ? st.noSchool : []) };
+}
+function weekSun(offset){ const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-d.getDay()+7*offset); return d; }
+function sunOf(k){ const d = new Date(k+'T00:00:00'); d.setDate(d.getDate()-d.getDay()); return d; }
+// a week counts when every school day was walked or marked "no school", with at least one walk
+function weekDone(c, sun){
+  let walked = 0;
+  const all = c.days.every(i=>{ const d=new Date(sun); d.setDate(d.getDate()+i); const k=ymd(d);
+    if(c.walks.has(k)){ walked++; return true; } return c.off.has(k); });
+  return all && walked > 0;
+}
+function walkStreak(c){
+  let n = 0, off = weekDone(c, weekSun(0)) ? 0 : -1;
+  while(n < 60 && weekDone(c, weekSun(off))){ n++; off--; }
+  return n;
+}
+function walkHTML(st, ro, isP){
+  const c = walkCfg(st); if(!c.on) return '';
+  const sun = weekSun(walkWeek), today = ymd(new Date());
+  let done = 0, offN = 0;
+  const cells = c.days.map(i=>{
+    const d = new Date(sun); d.setDate(d.getDate()+i); const k = ymd(d);
+    const on = c.walks.has(k), off = !on && c.off.has(k), fut = k > today;
+    if(on) done++; if(off) offN++;
+    // the child can't tap future days or days the parent marked "no school"; the parent can mark future days off
+    const dis = ro || (isP ? false : (fut || off));
+    const face = on ? '✓' : off ? '—' : DSHORT[i];
+    const state = on ? 'הלכה' : off ? 'אין לימודים' : 'לא סומן';
+    return `<button class="day ${on?'on':''} ${off?'off':''} ${fut&&!off?'future':''}" data-walk="${k}" ${dis?'disabled':''} aria-label="${DAYS[i]} ${d.getDate()}.${d.getMonth()+1}: ${state}">${face}<small>${off?'חופש':d.getDate()+'.'+(d.getMonth()+1)}</small></button>`;
+  }).join('');
+  const total = c.days.length - offN, left = total - done, streak = walkStreak(c);
+  const label = walkWeek===0 ? 'השבוע' : walkWeek===-1 ? 'שבוע שעבר' : `לפני ${-walkWeek} שבועות`;
+  const status = weekDone(c, sun) ? `<b>שבוע מלא! ${c.bonus>0?'₪'+fmt(c.bonus)+' נוספו לקופה':''} 🎉</b>`
+    : total === 0 ? 'אין לימודים השבוע'
+    : `עוד ${left===1?'יום אחד':left+' ימים'}${c.bonus>0?' לבונוס של ₪'+fmt(c.bonus):''}`;
+  return `<div class="walk">
+    <div class="wh"><b>🚶 ${WALK_NAME}</b>
+      <div class="nav"><button data-wk="-1" ${walkWeek<=-8?'disabled':''} aria-label="שבוע קודם">›</button><span>${label}</span><button data-wk="1" ${walkWeek>=(isP?4:0)?'disabled':''} aria-label="שבוע הבא">‹</button></div></div>
+    <div class="days">${cells}</div>
+    <div class="walkbar"><i style="width:${total?done/total*100:0}%"></i></div>
+    <div class="ws"><span>${status}</span><span>${done}/${total}${streak>1?' · רצף '+streak+' שבועות 🔥':''}</span></div>
+    ${isP && !ro ? `<div class="hint" style="margin:8px 0 0">לחיצה על יום: הלכה ✓ ← אין לימודים — ← ריק</div>` : ''}
+  </div>`;
+}
+async function tapWalk(k){
+  const c = walkCfg(S.settings), isP = role==='parent';
+  const cur = c.walks.has(k) ? 'walk' : c.off.has(k) ? 'off' : 'none';
+  const today = ymd(new Date());
+  let next;
+  if(isP){
+    next = cur==='none' ? (k > today ? 'off' : 'walk') : cur==='walk' ? 'off' : 'none';
+  } else {
+    if(cur==='off') return;
+    next = cur==='walk' ? 'none' : 'walk';
+  }
+  const sun = sunOf(k), before = weekDone(c, sun);
+  const w = new Set(c.walks), o = new Set(c.off);
+  w.delete(k); o.delete(k); if(next==='walk') w.add(k); if(next==='off') o.add(k);
+  S.settings = {...S.settings, walks:[...w], noSchool:[...o]}; render();
+  const ok = await safe(()=>write('kupa_set_walk_day', {p_date:k, p_state:next}));
+  if(ok){
+    const c2 = walkCfg(S.settings), after = weekDone(c2, sun);
+    if(after && !before && c2.bonus>0) toast('שבוע מלא! '+WALK_NAME+' ₪'+fmt(c2.bonus)+' נוסף לקופה 🎉');
+    else if(!after && before && c2.bonus>0) toast(WALK_NAME+' של השבוע הוסר');
+  } else refresh();
 }
 
 function renderMain(){
@@ -522,6 +617,7 @@ function renderMain(){
     <div class="goal">${goalLine}</div>
     ${isP && !ro && allowanceDue() ? `<div class="banner"><span>הגיע הזמן לדמי הכיס<br><small style="font-weight:400">${scheduleText(st)}</small></span><button data-a="allow">להוסיף ₪${fmt(+st.weekly)}</button></div>`:''}
     <div class="actions">${actions}</div>
+    ${walkHTML(st, ro, isP)}
     ${(isP ? pending.length : S.req.length) ? `<h2>${isP?'בקשות שמחכות לך':'הבקשות שלי'}</h2><div class="list">${reqRows}</div>`:''}
     <h2>החודש <button class="chip" data-tab="details" style="font-size:13px;padding:3px 10px;margin-inline-start:6px">לפירוט</button></h2>
     <div class="stats"><div class="stat"><div class="v" style="color:var(--mint)">+₪${fmt(mIn)}</div><div class="k">נכנס</div></div>
@@ -534,6 +630,8 @@ function renderMain(){
   $('#sw').onclick = openAccount;
   app.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{ tab=b.dataset.tab; render(); window.scrollTo(0,0); });
   app.querySelectorAll('[data-range]').forEach(b=>b.onclick=()=>{ det.range=b.dataset.range; render(); });
+  app.querySelectorAll('[data-walk]').forEach(b=>b.onclick=()=>tapWalk(b.dataset.walk));
+  app.querySelectorAll('[data-wk]').forEach(b=>b.onclick=()=>{ walkWeek=Math.min(role==='parent'?4:0,Math.max(-8,walkWeek+ +b.dataset.wk)); render(); });
   app.querySelectorAll('[data-flt]').forEach(b=>b.onclick=()=>{ det.filter=b.dataset.flt; render(); });
   app.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>openAction(b.dataset.a));
   app.querySelectorAll('[data-del]').forEach(b=>b.onclick=()=>{ if(confirm('למחוק את התנועה הזאת?')) safe(()=>store.delTx(b.dataset.del),'נמחק'); });
@@ -626,6 +724,10 @@ function openSettings(){
     <div class="field"><label for="pl">איך היא קוראת לך?</label><input id="pl" value="${esc(st.parentLabel||'אבא')}"></div>
     <h2>דמי כיס</h2>
     ${schedFields(st)}
+    <h2>בונוס הליכה לבית הספר</h2>
+    <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><input type="checkbox" id="won" ${walkCfg(st).on?'checked':''} style="width:20px;height:20px"> פעיל</label>
+    <div class="field"><label for="wb">בונוס על שבוע מלא (₪)</label><input id="wb" type="number" inputmode="decimal" min="0" value="${walkCfg(st).bonus}"></div>
+    <div class="field"><label>ימי לימודים</label><div class="chips">${DAYS.map((d,i)=>`<button class="chip ${walkCfg(st).days.includes(i)?'on':''}" data-wd="${i}">${d}</button>`).join('')}</div></div>
     <button class="primary" id="sv">שמירה</button>
     <h2>המשתמש של ${esc(st.childName)}</h2>
     ${kids.length ? `
@@ -641,8 +743,12 @@ function openSettings(){
     const old = sched(st);
     const changed = r => r.period!==old.period || r.every!==old.every || (r.period==='week' ? r.payday!==old.payday : r.monthDay!==old.monthDay);
     bindSched(changed);
+    $('#sheet').querySelectorAll('[data-wd]').forEach(b=>b.onclick=()=>b.classList.toggle('on'));
     $('#sv').onclick = async()=>{
       const r = readSched();
+      const wd = [...$('#sheet').querySelectorAll('[data-wd].on')].map(b=>+b.dataset.wd);
+      if(!wd.length){ toast('צריך לבחור לפחות יום לימודים אחד'); return; }
+      r.walkOn = $('#won').checked; r.walkBonus = Math.max(0,+$('#wb').value||0); r.walkDays = wd;
       const o = { childName:$('#cn').value.trim()||st.childName, parentLabel:$('#pl').value.trim()||'אבא', ...r };
       // a new schedule starts from the next payment date
       if(changed(r)){ o.anchor = nextAnchor(r, Date.now()); o.lastPaidKey = ''; }
