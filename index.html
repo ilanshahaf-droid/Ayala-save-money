@@ -137,9 +137,10 @@ h2{font-size:15px;font-weight:600;color:var(--muted);margin:22px 0 8px}
 .brick{width:1.15em;height:1.15em;vertical-align:-.2em;display:inline-block}
 .walk{background:var(--paper);border:1.5px solid var(--line);border-radius:16px;padding:14px;margin-bottom:22px}
 .walk .wh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
-.walk .wh b{font-size:17px}
+.walk .wh b{font-size:16px}
+.walk .nav span{white-space:nowrap;min-width:4.5em;text-align:center}
 .walk .nav{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--muted)}
-.walk .nav button{border:1.5px solid var(--line);background:var(--bg);border-radius:999px;width:30px;height:30px;line-height:1;font-size:16px}
+.walk .nav button{display:grid;place-items:center;padding:0;color:var(--ink);border:1.5px solid var(--line);background:var(--bg);border-radius:999px;width:30px;height:30px;line-height:1;font-size:16px}
 .walk .nav button:disabled{opacity:.35}
 .days{display:flex;gap:6px;justify-content:space-between}
 .day{flex:1;max-width:56px;aspect-ratio:1;border-radius:14px;border:1.5px dashed var(--line);background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:600;font-size:15px;gap:1px;padding:0}
@@ -535,7 +536,7 @@ function walkHTML(st, ro, isP){
     : `עוד ${left===1?'יום אחד':left+' ימים'}${c.bonus>0?' לבונוס של ₪'+fmt(c.bonus):''}`;
   return `<div class="walk">
     <div class="wh"><b>🚶 ${WALK_NAME}</b>
-      <div class="nav"><button data-wk="-1" ${walkWeek<=-8?'disabled':''} aria-label="שבוע קודם">›</button><span>${label}</span><button data-wk="1" ${walkWeek>=(isP?4:0)?'disabled':''} aria-label="שבוע הבא">‹</button></div></div>
+      <div class="nav"><button data-wk="-1" ${walkWeek<=-8?'disabled':''} aria-label="שבוע קודם"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span>${label}</span><button data-wk="1" ${walkWeek>=(isP?4:0)?'disabled':''} aria-label="שבוע הבא"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M9 2L4 7l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div>
     <div class="days">${cells}</div>
     <div class="walkbar"><i style="width:${total?done/total*100:0}%"></i></div>
     <div class="ws"><span>${status}</span><span>${done}/${total}${streak>1?' · רצף '+streak+' שבועות 🔥':''}</span></div>
