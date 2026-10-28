@@ -530,7 +530,7 @@ function walkHTML(st, ro, isP){
     return `<button class="day ${on?'on':''} ${off?'off':''} ${fut&&!off?'future':''}" data-walk="${k}" ${dis?'disabled':''} aria-label="${DAYS[i]} ${d.getDate()}.${d.getMonth()+1}: ${state}">${face}<small>${off?'חופש':d.getDate()+'.'+(d.getMonth()+1)}</small></button>`;
   }).join('');
   const total = c.days.length - offN, left = total - done, streak = walkStreak(c);
-  const label = walkWeek===0 ? 'השבוע' : walkWeek===-1 ? 'שבוע שעבר' : `לפני ${-walkWeek} שבועות`;
+  const label = walkWeek===0 ? 'השבוע' : walkWeek===-1 ? 'שבוע שעבר' : walkWeek===1 ? 'שבוע הבא' : walkWeek===-2 ? 'לפני שבועיים' : walkWeek===2 ? 'בעוד שבועיים' : walkWeek<0 ? `לפני ${-walkWeek} שבועות` : `בעוד ${walkWeek} שבועות`;
   const status = weekDone(c, sun) ? `<b>שבוע מלא! ${c.bonus>0?'₪'+fmt(c.bonus)+' נוספו לקופה':''} 🎉</b>`
     : total === 0 ? 'אין לימודים השבוע'
     : `עוד ${left===1?'יום אחד':left+' ימים'}${c.bonus>0?' לבונוס של ₪'+fmt(c.bonus):''}`;
