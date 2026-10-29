@@ -41,7 +41,7 @@ body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);font
 button,input,select{font:inherit;color:inherit}
 button{cursor:pointer}
 :focus-visible{outline:3px solid var(--lilac);outline-offset:2px}
-.wrap{max-width:520px;margin:0 auto;padding:14px 16px 40px}
+.wrap{max-width:520px;margin:0 auto;padding:14px 16px calc(110px + env(safe-area-inset-bottom,0px))}
 .top{display:flex;align-items:center;justify-content:space-between;gap:10px}
 .top h1{font-family:var(--display);font-weight:400;font-size:22px;margin:0}
 .who{border:1.5px solid var(--line);background:var(--paper);border-radius:999px;padding:5px 12px;font-size:14px;color:var(--muted)}
@@ -118,8 +118,8 @@ h2{font-size:15px;font-weight:600;color:var(--muted);margin:22px 0 8px}
 .pick p{color:var(--muted);margin:0 0 26px}
 .pick .opts{display:grid;gap:12px}
 .pick .opts button{border:0;border-radius:18px;padding:20px;font-size:20px;font-weight:600;box-shadow:var(--shadow)}
-.tabs{display:flex;gap:4px;background:var(--paper);border:1.5px solid var(--line);border-radius:999px;padding:4px;margin:14px 0 4px}
-.tabs button{flex:1;border:0;background:none;border-radius:999px;padding:9px;font-weight:600;font-size:16px;color:var(--muted)}
+.tabs{position:fixed;z-index:6;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));width:min(360px,calc(100% - 32px));display:flex;gap:4px;background:var(--paper);border:1.5px solid var(--line);border-radius:999px;padding:5px;box-shadow:0 8px 24px rgba(18,59,46,.22)}
+.tabs button{flex:1;border:0;background:none;border-radius:999px;padding:11px 9px;font-weight:600;font-size:16px;color:var(--muted)}
 .tabs button[aria-selected="true"]{background:var(--ink);color:var(--paper)}
 .seg{display:flex;flex-wrap:wrap;gap:7px;margin:14px 0 4px}
 .chip{cursor:pointer}
@@ -135,12 +135,12 @@ h2{font-size:15px;font-weight:600;color:var(--muted);margin:22px 0 8px}
 .total .amt{font-size:18px}
 .hint{font-size:14px;color:var(--muted);margin:-4px 0 14px}
 .brick{width:1.15em;height:1.15em;vertical-align:-.2em;display:inline-block}
-.walk{background:var(--paper);border:1.5px solid var(--line);border-radius:16px;padding:14px;margin-bottom:22px}
+.walk{background:var(--paper);border:1.5px solid var(--line);border-radius:16px;padding:14px;margin:14px 0 4px}
 .walk .wh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
-.walk .wh b{font-size:16px}
-.walk .nav span{white-space:nowrap;min-width:4.5em;text-align:center}
+.walk .wh b{font-size:15px;white-space:nowrap}
+.walk .nav span{white-space:nowrap;min-width:4em;text-align:center}
 .walk .nav{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--muted)}
-.walk .nav button{display:grid;place-items:center;padding:0;color:var(--ink);border:1.5px solid var(--line);background:var(--bg);border-radius:999px;width:30px;height:30px;line-height:1;font-size:16px}
+.walk .nav button{display:grid;place-items:center;padding:0;color:var(--ink);border:1.5px solid var(--line);background:var(--bg);border-radius:999px;width:28px;height:28px;flex:none;line-height:1;font-size:16px}
 .walk .nav button:disabled{opacity:.35}
 .days{display:flex;gap:6px;justify-content:space-between}
 .day{flex:1;max-width:56px;aspect-ratio:1;border-radius:14px;border:1.5px dashed var(--line);background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:600;font-size:15px;gap:1px;padding:0}
@@ -150,12 +150,36 @@ h2{font-size:15px;font-weight:600;color:var(--muted);margin:22px 0 8px}
 .day:disabled{cursor:default}
 .day.future{opacity:.4}
 .day.off{background:var(--paper);border:1.5px solid var(--line);color:var(--muted)}
-.walkbar{height:10px;border-radius:99px;background:var(--bg);overflow:hidden;margin:12px 0 6px}
-.walkbar i{display:block;height:100%;border-radius:99px;background:var(--mint);transition:width .3s}
+.batt{display:flex;align-items:center;margin:4px 0 12px}
+.batt .cell{position:relative;flex:1;display:flex;gap:5px;padding:5px;height:52px;border:3px solid var(--ink);border-radius:13px;background:var(--paper)}
+.batt .nub{width:8px;height:20px;background:var(--ink);border-radius:5px 0 0 5px;flex:none}
+.bseg{flex:1;border-radius:6px;background:var(--bg);transition:background .25s}
+.bseg.on{background:var(--mint)}
+.bseg.off{background:repeating-linear-gradient(135deg,var(--line) 0 4px,transparent 4px 9px)}
+.batt.full .bseg.on{background:var(--gold)!important}
+.batt .bolt{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
+.batt .pct{min-width:3.2em;text-align:center;font-weight:600;font-size:17px;font-variant-numeric:tabular-nums}
+.walk .wh{margin-bottom:6px}
 .walk .ws{font-size:14px;color:var(--muted);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
 .walk .ws span:last-child{white-space:nowrap}
 .walk .ws b{color:var(--mint)}
-.toast{position:fixed;bottom:calc(20px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:999px;font-size:15px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
+.day.today{border:2px solid var(--lilac);box-shadow:0 0 0 3px color-mix(in srgb, var(--lilac) 22%, transparent)}
+.streak{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
+.streak b{color:var(--ink)}
+.flames{display:flex;gap:4px;flex:none}
+.flames i{width:16px;height:16px;border-radius:50%;background:var(--bg);border:1.5px solid var(--line)}
+.flames i.on{background:#F08A3C;border-color:#C9661F}
+.wfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:var(--muted)}
+.linkbtn{border:1.5px solid var(--line);background:var(--bg);border-radius:999px;padding:5px 11px;font-size:13px;font-weight:500;white-space:nowrap}
+.cele{text-align:center}
+.cele h3{margin:4px 0 8px!important}
+.cele p{color:var(--muted);line-height:1.6;margin:0 0 18px}
+.cele p b{color:var(--ink)}
+.cele .bigplus{display:inline-block;font-family:var(--display);font-weight:400;font-size:30px;color:var(--mint);margin:6px 0 2px}
+.cele-ic{font-size:56px;line-height:1;margin-top:4px;animation:pop .5s cubic-bezier(.3,1.6,.6,1)}
+@keyframes pop{from{transform:scale(.3);opacity:0}}
+@media (prefers-reduced-motion:reduce){.cele-ic{animation:none}}
+.toast{position:fixed;bottom:calc(86px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:999px;font-size:15px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
 .toast.on{opacity:1}
 .coin{animation:drop .6s cubic-bezier(.3,1.4,.6,1)}
 @keyframes drop{from{transform:translateY(-60px);opacity:0}}
@@ -214,6 +238,7 @@ async function refresh(){
     S.loaded = {settings:true,tx:true}; S.online = true;
   }catch(e){ S.online = false; S.loaded = {settings:true,tx:true}; }
   render();
+  setTimeout(maybePrompts, 400);
 }
 function ping(){ if(channel) channel.send({type:'broadcast', event:'changed', payload:{}}); }
 async function write(fn, args){ await rpc(fn, args); ping(); await refresh(); }
@@ -428,7 +453,7 @@ function jarSVG(fill){
 
 function txRow(t, N, isP, ro){
   const cat = t.cat ? CATS.find(c=>c[1]===t.cat) : null;
-  const ic = t.walk?'🚶':t.type==='allowance'?'🪙':t.type==='bonus'?'⭐':t.type==='gift'?'🎁':t.type==='request'?'🙋':t.type==='start'?'🏦':t.type==='take'?'↩':(cat?cat[0]:'🛍️');
+  const ic = t.streak?'🔥':t.walk?'🚶':t.type==='allowance'?'🪙':t.type==='bonus'?'⭐':t.type==='gift'?'🎁':t.type==='request'?'🙋':t.type==='start'?'🏦':t.type==='take'?'↩':(cat?cat[0]:'🛍️');
   const title = t.note || (t.type==='allowance'?'דמי כיס':t.type==='spend'?(t.cat||'הוצאה'):'');
   const by = t.by==='parent'?N.parent:N.child;
   const canDel = !ro && (isP || t.by==='child');
@@ -498,7 +523,9 @@ function ymd(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0
 function walkCfg(st){
   st = st || {};
   const days = Array.isArray(st.walkDays) && st.walkDays.length ? st.walkDays.map(Number).sort() : [0,1,2,3,4];
-  return { on: st.walkOn !== false, days, bonus: st.walkBonus == null ? 5 : +st.walkBonus,
+  return { on: st.walkOn !== false, days,
+    bonus: st.walkBonus == null ? 5 : +st.walkBonus,
+    streakBonus: st.walkStreakBonus == null ? 5 : +st.walkStreakBonus,
     walks: new Set(Array.isArray(st.walks) ? st.walks : []), off: new Set(Array.isArray(st.noSchool) ? st.noSchool : []) };
 }
 function weekSun(offset){ const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-d.getDay()+7*offset); return d; }
@@ -510,39 +537,60 @@ function weekDone(c, sun){
     if(c.walks.has(k)){ walked++; return true; } return c.off.has(k); });
   return all && walked > 0;
 }
-function walkStreak(c){
-  let n = 0, off = weekDone(c, weekSun(0)) ? 0 : -1;
-  while(n < 60 && weekDone(c, weekSun(off))){ n++; off--; }
-  return n;
-}
+function runEndingAt(c, sun){ let n = 0; const k = new Date(sun); while(n < 60 && weekDone(c, k)){ n++; k.setDate(k.getDate()-7); } return n; }
+function walkStreak(c){ const s0 = weekSun(0); if(weekDone(c, s0)) return runEndingAt(c, s0); return runEndingAt(c, weekSun(-1)); }
+function isSchoolDayToday(c){ return c.days.includes(new Date().getDay()); }
+
 function walkHTML(st, ro, isP){
   const c = walkCfg(st); if(!c.on) return '';
-  const sun = weekSun(walkWeek), today = ymd(new Date());
+  const sun = weekSun(walkWeek), today = ymd(new Date()), afterHour = new Date().getHours() >= 8;
   let done = 0, offN = 0;
-  const cells = c.days.map(i=>{
+  const n = c.days.length;
+  const cells = [], segs = [];
+  c.days.forEach((i, idx)=>{
     const d = new Date(sun); d.setDate(d.getDate()+i); const k = ymd(d);
-    const on = c.walks.has(k), off = !on && c.off.has(k), fut = k > today;
+    const on = c.walks.has(k), off = !on && c.off.has(k), fut = k > today, isToday = k === today;
     if(on) done++; if(off) offN++;
-    // the child can't tap future days or days the parent marked "no school"; the parent can mark future days off
     const dis = ro || (isP ? false : (fut || off));
     const face = on ? '✓' : off ? '—' : DSHORT[i];
     const state = on ? 'הלכה' : off ? 'אין לימודים' : 'לא סומן';
-    return `<button class="day ${on?'on':''} ${off?'off':''} ${fut&&!off?'future':''}" data-walk="${k}" ${dis?'disabled':''} aria-label="${DAYS[i]} ${d.getDate()}.${d.getMonth()+1}: ${state}">${face}<small>${off?'חופש':d.getDate()+'.'+(d.getMonth()+1)}</small></button>`;
-  }).join('');
-  const total = c.days.length - offN, left = total - done, streak = walkStreak(c);
+    const nudge = isToday && !on && !off && afterHour ? 'today' : '';
+    cells.push(`<button class="day ${on?'on':''} ${off?'off':''} ${fut&&!off?'future':''} ${nudge}" data-walk="${k}" ${dis?'disabled':''} aria-label="${DAYS[i]} ${d.getDate()}.${d.getMonth()+1}: ${state}">${face}<small>${off?'חופש':isToday?'היום':d.getDate()+'.'+(d.getMonth()+1)}</small></button>`);
+    // green shades: light at the start of the week, dark toward the end
+    const pct = n > 1 ? Math.round(idx/(n-1)*100) : 100;
+    segs.push(`<i class="bseg ${on?'on':off?'off':''}" ${on?`style="background:var(--mint);background:color-mix(in oklab, #A7E3BD, #11603E ${pct}%)"`:''}></i>`);
+  });
+  const total = n - offN, left = total - done;
+  const full = weekDone(c, sun);
   const label = walkWeek===0 ? 'השבוע' : walkWeek===-1 ? 'שבוע שעבר' : walkWeek===1 ? 'שבוע הבא' : walkWeek===-2 ? 'לפני שבועיים' : walkWeek===2 ? 'בעוד שבועיים' : walkWeek<0 ? `לפני ${-walkWeek} שבועות` : `בעוד ${walkWeek} שבועות`;
-  const status = weekDone(c, sun) ? `<b>שבוע מלא! ${c.bonus>0?'₪'+fmt(c.bonus)+' נוספו לקופה':''} 🎉</b>`
+  const status = full ? `<b>שבוע מלא! ${c.bonus>0?'₪'+fmt(c.bonus)+' נוספו לקופה':''} 🎉</b>`
     : total === 0 ? 'אין לימודים השבוע'
     : `עוד ${left===1?'יום אחד':left+' ימים'}${c.bonus>0?' לבונוס של ₪'+fmt(c.bonus):''}`;
+  const batt = `<div class="batt ${full?'full':''}" role="img" aria-label="${done} מתוך ${total} ימים"><span class="pct">${done}/${total}</span><div class="cell">${segs.join('')}${full?'<span class="bolt"><svg width="26" height="30" viewBox="0 0 26 30" aria-hidden="true"><path d="M15 1L3 17h9l-2 12 13-17h-9l1-11z" fill="#fff" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/></svg></span>':''}</div><span class="nub"></span></div>`;
+
+  // 4-week streak progress (shown for the current week)
+  let streakRow = '';
+  if(c.streakBonus > 0 && walkWeek === 0){
+    const thisDone = weekDone(c, weekSun(0)), streak = walkStreak(c);
+    const hit = thisDone && streak > 0 && streak % 4 === 0;
+    const filled = hit ? 4 : streak % 4;
+    const need = 4 - filled;
+    const txt = hit ? `<b>4 שבועות ברצף! עוד ₪${fmt(c.streakBonus)} נוספו 🔥</b>`
+      : need === 1 && !thisDone ? `שבוע מלא השבוע = בונוס רצף של ₪${fmt(c.streakBonus)}!`
+      : `עוד ${need===1?'שבוע מלא אחד':need+' שבועות מלאים'} לבונוס רצף של ₪${fmt(c.streakBonus)}`;
+    streakRow = `<div class="streak"><span class="flames" aria-label="${filled} מתוך 4 שבועות ברצף">${[0,1,2,3].map(j=>`<i class="${j<filled?'on':''}"></i>`).join('')}</span><span>${txt}</span></div>`;
+  }
   return `<div class="walk">
     <div class="wh"><b>🚶 ${WALK_NAME}</b>
       <div class="nav"><button data-wk="-1" ${walkWeek<=-8?'disabled':''} aria-label="שבוע קודם"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span>${label}</span><button data-wk="1" ${walkWeek>=(isP?4:0)?'disabled':''} aria-label="שבוע הבא"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M9 2L4 7l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div>
-    <div class="days">${cells}</div>
-    <div class="walkbar"><i style="width:${total?done/total*100:0}%"></i></div>
-    <div class="ws"><span>${status}</span><span>${done}/${total}${streak>1?' · רצף '+streak+' שבועות 🔥':''}</span></div>
-    ${isP && !ro ? `<div class="hint" style="margin:8px 0 0">לחיצה על יום: הלכה ✓ ← אין לימודים — ← ריק</div>` : ''}
+    ${batt}
+    <div class="days">${cells.join('')}</div>
+    <div class="ws" style="margin-top:10px"><span>${status}</span></div>
+    ${streakRow}
+    <div class="wfoot">${isP && !ro ? `<span>לחיצה על יום: הלכה ← חופש ← ריק</span>` : '<span></span>'}<button class="linkbtn" data-a="remind">⏰ תזכורת בטלפון</button></div>
   </div>`;
 }
+
 async function tapWalk(k){
   const c = walkCfg(S.settings), isP = role==='parent';
   const cur = c.walks.has(k) ? 'walk' : c.off.has(k) ? 'off' : 'none';
@@ -554,6 +602,10 @@ async function tapWalk(k){
     if(cur==='off') return;
     next = cur==='walk' ? 'none' : 'walk';
   }
+  return setWalk(k, next);
+}
+async function setWalk(k, next){
+  const c = walkCfg(S.settings);
   const sun = sunOf(k), before = weekDone(c, sun);
   const w = new Set(c.walks), o = new Set(c.off);
   w.delete(k); o.delete(k); if(next==='walk') w.add(k); if(next==='off') o.add(k);
@@ -561,9 +613,101 @@ async function tapWalk(k){
   const ok = await safe(()=>write('kupa_set_walk_day', {p_date:k, p_state:next}));
   if(ok){
     const c2 = walkCfg(S.settings), after = weekDone(c2, sun);
-    if(after && !before && c2.bonus>0) toast('שבוע מלא! '+WALK_NAME+' ₪'+fmt(c2.bonus)+' נוסף לקופה 🎉');
+    if(after && !before){ seen('cel-'+ymd(sun)); celebrate(sun); }
     else if(!after && before && c2.bonus>0) toast(WALK_NAME+' של השבוע הוסר');
+    else if(next==='walk' && !after) toast('סומן ✓');
   } else refresh();
+}
+
+/* ---------- encouragement + reminders ---------- */
+const lsGet = k => { try { return localStorage.getItem('pm-'+k); } catch(e){ return null; } };
+function seen(k){ try { localStorage.setItem('pm-'+k, '1'); } catch(e){} }
+function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
+function celebrate(sun){
+  const c = walkCfg(S.settings), N = names(), isP = role==='parent';
+  const run = runEndingAt(c, sun);
+  const streakHit = c.streakBonus > 0 && run > 0 && run % 4 === 0;
+  const got = (c.bonus||0) + (streakHit ? c.streakBonus : 0);
+  const title = isP ? `${esc(N.child)} השלימה שבוע מלא!`
+    : pick([`כל הכבוד, ${esc(N.child)}!`, `איזה יופי, ${esc(N.child)}!`, `את אלופה, ${esc(N.child)}!`, `וואו, ${esc(N.child)}!`]);
+  let body = isP ? `היא הלכה לבית הספר כל השבוע.` : pick(['הלכת לבית הספר כל השבוע. זה ממש לא מובן מאליו!', 'הלכת ברגל כל השבוע, יום אחרי יום. זה דורש התמדה, והצלחת!', 'שבוע שלם של הליכה לבית הספר. את יכולה להיות גאה בעצמך!']);
+  if(got > 0) body += `<br><b class="bigplus">+₪${fmt(got)}</b> ${isP?'נוספו לקופה שלה':'נוספו לקופה שלך'}`;
+  if(streakHit) body += `<br>🔥 ${run===4?'4 שבועות':run+' שבועות'} ברצף! ${isP?'היא קיבלה':'קיבלת'} גם בונוס רצף של ₪${fmt(c.streakBonus)}.`;
+  else if(c.streakBonus > 0 && run > 0){
+    const need = 4 - run % 4;
+    body += `<br>🔥 ${run===1?'שבוע ראשון ברצף':'שבוע '+run+' ברצף'}. עוד ${need===1?'שבוע אחד':need+' שבועות'} לבונוס רצף של ₪${fmt(c.streakBonus)}${isP?'.':' — ממשיכים ככה!'}`;
+  }
+  openSheet(`<div class="cele"><div class="cele-ic">${streakHit?'🏆':'🎉'}</div><h3>${title}</h3><p>${body}</p>
+    <button class="primary" data-close>${isP?'מעולה':'יש! 🙌'}</button></div>`);
+}
+function maybePrompts(){
+  if(!S.settings || !S.me || !S.me.family || $('#scrim').classList.contains('on') || app.dataset.view !== 'main') return;
+  const c = walkCfg(S.settings); if(!c.on) return;
+  // 1) a full week finished that this device hasn't celebrated yet (this week or last week)
+  for(const off of [0,-1]){
+    const sun = weekSun(off), key = 'cel-'+ymd(sun);
+    if(weekDone(c, sun) && !lsGet(key)){ seen(key); celebrate(sun); return; }
+  }
+  // 2) daily reminder on opening the app (her account): school day, after 8:00, today not marked yet
+  if(role !== 'child' || S.canWrite === false) return;
+  const now = new Date(), today = ymd(now);
+  if(!isSchoolDayToday(c) || now.getHours() < 8 || c.walks.has(today) || c.off.has(today) || lsGet('rem-'+today)) return;
+  seen('rem-'+today);
+  const sun = weekSun(0);
+  const missed = c.days.filter(i=>{ const d=new Date(sun); d.setDate(d.getDate()+i); const k=ymd(d); return k < today && !c.walks.has(k) && !c.off.has(k); }).length;
+  openSheet(`<div class="cele"><div class="cele-ic">🎒</div><h3>${now.getHours()<12?'בוקר טוב':now.getHours()<17?'צהריים טובים':'ערב טוב'}, ${esc(names().child)}!</h3>
+    <p>הלכת היום ברגל לבית הספר?${missed?`<br><small>יש עוד ${missed===1?'יום אחד':missed+' ימים'} השבוע שלא סימנת. אפשר לסמן אותם בכרטיס למעלה.</small>`:''}</p>
+    <button class="primary" id="yes" style="background:var(--mint)">כן, הלכתי ✓</button>
+    <button class="ghost" data-close>עוד לא</button></div>`, ()=>{
+    $('#yes').onclick = ()=>{ closeSheet(); setWalk(today, 'walk'); };
+  });
+}
+
+/* daily phone reminder: a repeating calendar event, Sun–Thu */
+function nextSchoolDate(c){ const d = new Date(); d.setHours(0,0,0,0); for(let i=0;i<8;i++){ if(c.days.includes(d.getDay())) return d; d.setDate(d.getDate()+1); } return d; }
+function icsDays(c){ return c.days.map(i=>['SU','MO','TU','WE','TH','FR','SA'][i]).join(','); }
+function openRemind(){
+  const c = walkCfg(S.settings);
+  let time = lsGet('remtime') || '08:15';
+  const daysTxt = c.days.map(i=>DSHORT[i]+"'").join(' ');
+  openSheet(`<h3>⏰ תזכורת יומית בטלפון</h3>
+    <p class="hint" style="margin:0 0 14px">אירוע חוזר ביומן של הטלפון, בימים ${daysTxt}, שמזכיר לסמן הליכה בקופה. ההתראה קופצת כמו כל אירוע ביומן.</p>
+    <div class="field"><label for="rt">באיזו שעה?</label><input id="rt" type="time" value="${time}" style="direction:ltr;text-align:center"></div>
+    <button class="primary" id="gcal">הוספה ל-Google Calendar</button>
+    <button class="primary" id="ics" style="background:var(--lilac);margin-top:10px">הורדת קובץ יומן (סמסונג / אייפון)</button>
+    <p class="hint" style="margin:12px 0 0">ב-Google Calendar ההתראה נקבעת לפי ברירת המחדל של היומן. כדאי לשנות אותה ל"בזמן האירוע".</p>
+    <button class="ghost" data-close>סגירה</button>`, ()=>{
+    const read = ()=>{ time = $('#rt').value || '08:15'; try{ localStorage.setItem('pm-remtime', time); }catch(e){} const [h,m] = time.split(':').map(Number); return {h, m}; };
+    const url = location.origin + location.pathname;
+    const title = '🚶 לסמן הליכה לבית הספר';
+    const desc = 'לפתוח את הקופה ולסמן שהלכת היום: ' + url;
+    const pad = x => String(x).padStart(2,'0');
+    const stamp = (d,h,m) => d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'T'+pad(h)+pad(m)+'00';
+    $('#gcal').onclick = ()=>{
+      const {h,m} = read(), d = nextSchoolDate(c), e = new Date(d); const em = m+5;
+      const q = new URLSearchParams({ action:'TEMPLATE', text:title, details:desc, ctz:'Asia/Jerusalem',
+        dates: stamp(d,h,m)+'/'+stamp(e, h + Math.floor(em/60), em%60), recur:'RRULE:FREQ=WEEKLY;BYDAY='+icsDays(c) });
+      window.open('https://calendar.google.com/calendar/render?'+q.toString(), '_blank');
+    };
+    $('#ics').onclick = ()=>{
+      const {h,m} = read(), d = nextSchoolDate(c);
+      const now = new Date(), z = now.getUTCFullYear()+pad(now.getUTCMonth()+1)+pad(now.getUTCDate())+'T'+pad(now.getUTCHours())+pad(now.getUTCMinutes())+'00Z';
+      const L = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//hakupa//he','CALSCALE:GREGORIAN','METHOD:PUBLISH',
+        'BEGIN:VTIMEZONE','TZID:Asia/Jerusalem',
+        'BEGIN:DAYLIGHT','TZOFFSETFROM:+0200','TZOFFSETTO:+0300','TZNAME:IDT','DTSTART:19700327T020000','RRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=FR;BYMONTHDAY=23,24,25,26,27,28,29','END:DAYLIGHT',
+        'BEGIN:STANDARD','TZOFFSETFROM:+0300','TZOFFSETTO:+0200','TZNAME:IST','DTSTART:19701025T020000','RRULE:FREQ=YEARLY;BYMONTH=10;BYDAY=-1SU','END:STANDARD',
+        'END:VTIMEZONE',
+        'BEGIN:VEVENT','UID:hakupa-walk-'+Date.now()+'@hakupa','DTSTAMP:'+z,
+        'DTSTART;TZID=Asia/Jerusalem:'+stamp(d,h,m),'DURATION:PT5M','RRULE:FREQ=WEEKLY;BYDAY='+icsDays(c),
+        'SUMMARY:'+title,'DESCRIPTION:'+desc,'URL:'+url,
+        'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+title,'TRIGGER:PT0M','END:VALARM',
+        'END:VEVENT','END:VCALENDAR'];
+      const blob = new Blob([L.join('\r\n')+'\r\n'], {type:'text/calendar;charset=utf-8'});
+      const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'tizkoret-halicha.ics';
+      document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      toast('הקובץ ירד. פותחים אותו כדי להוסיף ליומן');
+    };
+  });
 }
 
 function renderMain(){
@@ -611,14 +755,14 @@ function renderMain(){
     <div class="top"><div><h1>הקופה של ${esc(N.child)}</h1>
       <div class="sync">${S.online?'מסונכרן בין המכשירים':'אין חיבור, מציג נתונים אחרונים'}</div></div>
       <button class="who" id="sw" aria-label="החשבון שלי">${esc((S.me&&S.me.username)||(isP?N.parent:N.child))}</button></div>
-    <div class="tabs" role="tablist"><button role="tab" data-tab="home" aria-selected="${tab==='home'}">הקופה</button><button role="tab" data-tab="details" aria-selected="${tab==='details'}">פירוט</button></div>
+    <nav class="tabs" role="tablist" aria-label="מסכים"><button role="tab" data-tab="home" aria-selected="${tab==='home'}"><span aria-hidden="true">🫙</span> הקופה</button><button role="tab" data-tab="details" aria-selected="${tab==='details'}"><span aria-hidden="true">📊</span> פירוט</button></nav>
     ${tab==='details' ? detailsHTML(N,isP,ro) : `
+    ${walkHTML(st, ro, isP)}
     <div class="hero ${grew?'coin':''}">${jarSVG(fill)}
       <div class="bal"><div class="n" dir="ltr">${bal<0?'−':''}<small>₪</small>${fmt(Math.abs(bal))}</div><div class="l">${isP?'יש לה בקופה':'יש לי בקופה'}</div></div></div>
     <div class="goal">${goalLine}</div>
     ${isP && !ro && allowanceDue() ? `<div class="banner"><span>הגיע הזמן לדמי הכיס<br><small style="font-weight:400">${scheduleText(st)}</small></span><button data-a="allow">להוסיף ₪${fmt(+st.weekly)}</button></div>`:''}
     <div class="actions">${actions}</div>
-    ${walkHTML(st, ro, isP)}
     ${(isP ? pending.length : S.req.length) ? `<h2>${isP?'בקשות שמחכות לך':'הבקשות שלי'}</h2><div class="list">${reqRows}</div>`:''}
     <h2>החודש <button class="chip" data-tab="details" style="font-size:13px;padding:3px 10px;margin-inline-start:6px">לפירוט</button></h2>
     <div class="stats"><div class="stat"><div class="v" style="color:var(--mint)">+₪${fmt(mIn)}</div><div class="k">נכנס</div></div>
@@ -669,6 +813,7 @@ $('#scrim').addEventListener('click', e=>{ if(e.target.id==='scrim') closeSheet(
 document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeSheet(); });
 
 function openAction(a){
+  if(a==='remind') return openRemind();
   const N = names(), st = S.settings, isP = role==='parent', by = isP?'parent':'child';
   if(a==='allow'){
     const k = periodKey(st, Date.now());
@@ -727,7 +872,10 @@ function openSettings(){
     ${schedFields(st)}
     <h2>בונוס הליכה לבית הספר</h2>
     <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><input type="checkbox" id="won" ${walkCfg(st).on?'checked':''} style="width:20px;height:20px"> פעיל</label>
-    <div class="field"><label for="wb">בונוס על שבוע מלא (₪)</label><input id="wb" type="number" inputmode="decimal" min="0" value="${walkCfg(st).bonus}"></div>
+    <div class="row2">
+      <div class="field" style="flex:1"><label for="wb">על שבוע מלא (₪)</label><input id="wb" type="number" inputmode="decimal" min="0" value="${walkCfg(st).bonus}"></div>
+      <div class="field" style="flex:1"><label for="wsb">על 4 שבועות ברצף (₪)</label><input id="wsb" type="number" inputmode="decimal" min="0" value="${walkCfg(st).streakBonus}"></div>
+    </div>
     <div class="field"><label>ימי לימודים</label><div class="chips">${DAYS.map((d,i)=>`<button class="chip ${walkCfg(st).days.includes(i)?'on':''}" data-wd="${i}">${d}</button>`).join('')}</div></div>
     <button class="primary" id="sv">שמירה</button>
     <h2>המשתמש של ${esc(st.childName)}</h2>
@@ -749,7 +897,7 @@ function openSettings(){
       const r = readSched();
       const wd = [...$('#sheet').querySelectorAll('[data-wd].on')].map(b=>+b.dataset.wd);
       if(!wd.length){ toast('צריך לבחור לפחות יום לימודים אחד'); return; }
-      r.walkOn = $('#won').checked; r.walkBonus = Math.max(0,+$('#wb').value||0); r.walkDays = wd;
+      r.walkOn = $('#won').checked; r.walkBonus = Math.max(0,+$('#wb').value||0); r.walkStreakBonus = Math.max(0,+$('#wsb').value||0); r.walkDays = wd;
       const o = { childName:$('#cn').value.trim()||st.childName, parentLabel:$('#pl').value.trim()||'אבא', ...r };
       // a new schedule starts from the next payment date
       if(changed(r)){ o.anchor = nextAnchor(r, Date.now()); o.lastPaidKey = ''; }
