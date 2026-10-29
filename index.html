@@ -135,41 +135,28 @@ h2{font-size:15px;font-weight:600;color:var(--muted);margin:22px 0 8px}
 .total .amt{font-size:18px}
 .hint{font-size:14px;color:var(--muted);margin:-4px 0 14px}
 .brick{width:1.15em;height:1.15em;vertical-align:-.2em;display:inline-block}
-.walk{background:var(--paper);border:1.5px solid var(--line);border-radius:16px;padding:14px;margin:14px 0 4px}
-.walk .wh{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
-.walk .wh b{font-size:15px;white-space:nowrap}
-.walk .nav span{white-space:nowrap;min-width:4em;text-align:center}
-.walk .nav{display:flex;align-items:center;gap:4px;font-size:13px;color:var(--muted)}
-.walk .nav button{display:grid;place-items:center;padding:0;color:var(--ink);border:1.5px solid var(--line);background:var(--bg);border-radius:999px;width:28px;height:28px;flex:none;line-height:1;font-size:16px}
+.walk{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:9px 11px 8px;margin:10px 0 2px}
+.walk .wh{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:6px}
+.walk .wh b{font-size:14px;white-space:nowrap}
+.walk .nav{display:flex;align-items:center;gap:2px;font-size:12px;color:var(--muted)}
+.walk .nav span{white-space:nowrap;min-width:4.2em;text-align:center}
+.walk .nav button{display:grid;place-items:center;padding:0;color:var(--ink);border:1px solid var(--line);background:var(--bg);border-radius:999px;width:24px;height:24px;flex:none}
 .walk .nav button:disabled{opacity:.35}
-.days{display:flex;gap:6px;justify-content:space-between}
-.day{flex:1;max-width:56px;aspect-ratio:1;border-radius:14px;border:1.5px dashed var(--line);background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:600;font-size:15px;gap:1px;padding:0}
-.day small{font-weight:400;font-size:11px;color:var(--muted)}
-.day.on{background:var(--mint);border:1.5px solid var(--mint);color:#fff}
-.day.on small{color:#fff;opacity:.85}
-.day:disabled{cursor:default}
-.day.future{opacity:.4}
-.day.off{background:var(--paper);border:1.5px solid var(--line);color:var(--muted)}
-.batt{display:flex;align-items:center;margin:4px 0 12px}
-.batt .cell{position:relative;flex:1;display:flex;gap:5px;padding:5px;height:52px;border:3px solid var(--ink);border-radius:13px;background:var(--paper)}
-.batt .nub{width:8px;height:20px;background:var(--ink);border-radius:5px 0 0 5px;flex:none}
-.bseg{flex:1;border-radius:6px;background:var(--bg);transition:background .25s}
-.bseg.on{background:var(--mint)}
-.bseg.off{background:repeating-linear-gradient(135deg,var(--line) 0 4px,transparent 4px 9px)}
-.batt.full .bseg.on{background:var(--gold)!important}
+.batt{display:flex;align-items:center}
+.batt .cell{position:relative;flex:1;display:flex;gap:4px;padding:4px;height:42px;border:2.5px solid var(--ink);border-radius:11px;background:var(--paper)}
+.batt .nub{width:6px;height:16px;background:var(--ink);border-radius:4px 0 0 4px;flex:none}
+.bseg{flex:1;border:0;border-radius:6px;background:var(--bg);color:var(--muted);font-weight:600;font-size:14px;padding:0;transition:background .25s}
+.bseg.off{background:repeating-linear-gradient(135deg,var(--line) 0 4px,transparent 4px 9px);color:var(--muted)}
+.bseg.future{opacity:.45}
+.bseg.today{box-shadow:inset 0 0 0 2px var(--lilac);color:var(--lilac)}
+.bseg:disabled{cursor:default}
+.batt.full .bseg.on{background:var(--gold)!important;color:#3a2a00!important}
 .batt .bolt{position:absolute;inset:0;display:grid;place-items:center;pointer-events:none}
-.batt .pct{min-width:3.2em;text-align:center;font-weight:600;font-size:17px;font-variant-numeric:tabular-nums}
-.walk .wh{margin-bottom:6px}
-.walk .ws{font-size:14px;color:var(--muted);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
-.walk .ws span:last-child{white-space:nowrap}
+.walk .ws{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:6px;font-size:13px;color:var(--muted)}
 .walk .ws b{color:var(--mint)}
-.day.today{border:2px solid var(--lilac);box-shadow:0 0 0 3px color-mix(in srgb, var(--lilac) 22%, transparent)}
-.streak{display:flex;align-items:center;gap:10px;margin-top:10px;padding-top:10px;border-top:1px solid var(--line);font-size:14px;color:var(--muted)}
-.streak b{color:var(--ink)}
-.flames{display:flex;gap:4px;flex:none}
-.flames i{width:16px;height:16px;border-radius:50%;background:var(--bg);border:1.5px solid var(--line)}
+.flames{display:flex;align-items:center;gap:3px;font-size:12px;flex:none}
+.flames i{width:9px;height:9px;border-radius:50%;background:var(--bg);border:1px solid var(--line)}
 .flames i.on{background:#F08A3C;border-color:#C9661F}
-.wfoot{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-top:10px;font-size:13px;color:var(--muted)}
 .linkbtn{border:1.5px solid var(--line);background:var(--bg);border-radius:999px;padding:5px 11px;font-size:13px;font-weight:500;white-space:nowrap}
 .cele{text-align:center}
 .cele h3{margin:4px 0 8px!important}
@@ -544,50 +531,37 @@ function isSchoolDayToday(c){ return c.days.includes(new Date().getDay()); }
 function walkHTML(st, ro, isP){
   const c = walkCfg(st); if(!c.on) return '';
   const sun = weekSun(walkWeek), today = ymd(new Date()), afterHour = new Date().getHours() >= 8;
-  let done = 0, offN = 0;
   const n = c.days.length;
-  const cells = [], segs = [];
-  c.days.forEach((i, idx)=>{
+  let done = 0, offN = 0;
+  // each battery segment is also the day's button
+  const segs = c.days.map((i, idx)=>{
     const d = new Date(sun); d.setDate(d.getDate()+i); const k = ymd(d);
     const on = c.walks.has(k), off = !on && c.off.has(k), fut = k > today, isToday = k === today;
     if(on) done++; if(off) offN++;
     const dis = ro || (isP ? false : (fut || off));
-    const face = on ? '✓' : off ? '—' : DSHORT[i];
-    const state = on ? 'הלכה' : off ? 'אין לימודים' : 'לא סומן';
-    const nudge = isToday && !on && !off && afterHour ? 'today' : '';
-    cells.push(`<button class="day ${on?'on':''} ${off?'off':''} ${fut&&!off?'future':''} ${nudge}" data-walk="${k}" ${dis?'disabled':''} aria-label="${DAYS[i]} ${d.getDate()}.${d.getMonth()+1}: ${state}">${face}<small>${off?'חופש':isToday?'היום':d.getDate()+'.'+(d.getMonth()+1)}</small></button>`);
-    // green shades: light at the start of the week, dark toward the end
     const pct = n > 1 ? Math.round(idx/(n-1)*100) : 100;
-    segs.push(`<i class="bseg ${on?'on':off?'off':''}" ${on?`style="background:var(--mint);background:color-mix(in oklab, #A7E3BD, #11603E ${pct}%)"`:''}></i>`);
-  });
-  const total = n - offN, left = total - done;
-  const full = weekDone(c, sun);
+    const shade = on ? `style="background:var(--mint);background:color-mix(in oklab, #A7E3BD, #11603E ${pct}%);color:${pct>45?'#fff':'#0E3B2A'}"` : '';
+    const nudge = isToday && !on && !off && afterHour ? 'today' : '';
+    const state = on ? 'הלכה' : off ? 'אין לימודים' : 'לא סומן';
+    return `<button class="bseg ${on?'on':''} ${off?'off':''} ${fut&&!off?'future':''} ${nudge}" ${shade} data-walk="${k}" ${dis?'disabled':''} aria-label="${DAYS[i]} ${d.getDate()}.${d.getMonth()+1}: ${state}">${DSHORT[i]}</button>`;
+  }).join('');
+  const total = n - offN, left = total - done, full = weekDone(c, sun);
   const label = walkWeek===0 ? 'השבוע' : walkWeek===-1 ? 'שבוע שעבר' : walkWeek===1 ? 'שבוע הבא' : walkWeek===-2 ? 'לפני שבועיים' : walkWeek===2 ? 'בעוד שבועיים' : walkWeek<0 ? `לפני ${-walkWeek} שבועות` : `בעוד ${walkWeek} שבועות`;
-  const status = full ? `<b>שבוע מלא! ${c.bonus>0?'₪'+fmt(c.bonus)+' נוספו לקופה':''} 🎉</b>`
-    : total === 0 ? 'אין לימודים השבוע'
-    : `עוד ${left===1?'יום אחד':left+' ימים'}${c.bonus>0?' לבונוס של ₪'+fmt(c.bonus):''}`;
-  const batt = `<div class="batt ${full?'full':''}" role="img" aria-label="${done} מתוך ${total} ימים"><span class="pct">${done}/${total}</span><div class="cell">${segs.join('')}${full?'<span class="bolt"><svg width="26" height="30" viewBox="0 0 26 30" aria-hidden="true"><path d="M15 1L3 17h9l-2 12 13-17h-9l1-11z" fill="#fff" stroke="var(--ink)" stroke-width="2" stroke-linejoin="round"/></svg></span>':''}</div><span class="nub"></span></div>`;
-
-  // 4-week streak progress (shown for the current week)
-  let streakRow = '';
+  const status = full ? `<b>⚡ שבוע מלא! +₪${fmt(c.bonus)}</b>`
+    : total === 0 ? 'אין לימודים'
+    : `עוד ${left===1?'יום':left+' ימים'} ל-₪${fmt(c.bonus)}`;
+  let flames = '';
   if(c.streakBonus > 0 && walkWeek === 0){
     const thisDone = weekDone(c, weekSun(0)), streak = walkStreak(c);
-    const hit = thisDone && streak > 0 && streak % 4 === 0;
-    const filled = hit ? 4 : streak % 4;
-    const need = 4 - filled;
-    const txt = hit ? `<b>4 שבועות ברצף! עוד ₪${fmt(c.streakBonus)} נוספו 🔥</b>`
-      : need === 1 && !thisDone ? `שבוע מלא השבוע = בונוס רצף של ₪${fmt(c.streakBonus)}!`
-      : `עוד ${need===1?'שבוע מלא אחד':need+' שבועות מלאים'} לבונוס רצף של ₪${fmt(c.streakBonus)}`;
-    streakRow = `<div class="streak"><span class="flames" aria-label="${filled} מתוך 4 שבועות ברצף">${[0,1,2,3].map(j=>`<i class="${j<filled?'on':''}"></i>`).join('')}</span><span>${txt}</span></div>`;
+    const filled = thisDone && streak > 0 && streak % 4 === 0 ? 4 : streak % 4;
+    flames = `<span class="flames" title="רצף שבועות מלאים: ${filled} מתוך 4 (בונוס רצף ₪${fmt(c.streakBonus)})" aria-label="רצף: ${filled} מתוך 4 שבועות">🔥${[0,1,2,3].map(j=>`<i class="${j<filled?'on':''}"></i>`).join('')}</span>`;
   }
+  const arrow = d => `<svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   return `<div class="walk">
     <div class="wh"><b>🚶 ${WALK_NAME}</b>
-      <div class="nav"><button data-wk="-1" ${walkWeek<=-8?'disabled':''} aria-label="שבוע קודם"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M5 2l5 5-5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button><span>${label}</span><button data-wk="1" ${walkWeek>=(isP?4:0)?'disabled':''} aria-label="שבוע הבא"><svg width="14" height="14" viewBox="0 0 14 14" aria-hidden="true"><path d="M9 2L4 7l5 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg></button></div></div>
-    ${batt}
-    <div class="days">${cells.join('')}</div>
-    <div class="ws" style="margin-top:10px"><span>${status}</span></div>
-    ${streakRow}
-    <div class="wfoot">${isP && !ro ? `<span>לחיצה על יום: הלכה ← חופש ← ריק</span>` : '<span></span>'}<button class="linkbtn" data-a="remind">⏰ תזכורת בטלפון</button></div>
+      <div class="nav"><button data-wk="-1" ${walkWeek<=-8?'disabled':''} aria-label="שבוע קודם">${arrow('M5 2l5 5-5 5')}</button><span>${label}</span><button data-wk="1" ${walkWeek>=(isP?4:0)?'disabled':''} aria-label="שבוע הבא">${arrow('M9 2L4 7l5 5')}</button></div></div>
+    <div class="batt ${full?'full':''}"><div class="cell">${segs}</div><span class="nub"></span></div>
+    <div class="ws"><span>${done}/${total} · ${status}</span>${flames}</div>
   </div>`;
 }
 
@@ -790,8 +764,9 @@ function openAccount(){
   const me = S.me || {};
   openSheet(`<h3>${esc(me.username || 'החשבון שלי')}</h3>
     <p style="color:var(--muted);margin:0 0 16px">${role==='parent'?'חשבון הורה':'חשבון של '+esc(names().child)}</p>
+    ${walkCfg(S.settings).on ? '<button class="primary" id="rem" style="background:var(--lilac);margin-bottom:10px">⏰ תזכורת יומית לסמן הליכה</button>' : ''}
     <button class="primary" id="lo">יציאה מהחשבון</button>
-    <button class="ghost" data-close>סגירה</button>`, ()=>{ $('#lo').onclick = logout; });
+    <button class="ghost" data-close>סגירה</button>`, ()=>{ $('#lo').onclick = logout; const r=$('#rem'); if(r) r.onclick = openRemind; });
 }
 async function approve(id, yes){
   const r = S.req.find(x=>x.id===id); if(!r) return;
@@ -871,12 +846,14 @@ function openSettings(){
     <h2>דמי כיס</h2>
     ${schedFields(st)}
     <h2>בונוס הליכה לבית הספר</h2>
+    <p class="hint" style="margin:0 0 10px">לחיצה על יום בסוללה: הלכה ← אין לימודים ← ריק. ימים בלי לימודים אפשר לסמן גם מראש.</p>
     <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><input type="checkbox" id="won" ${walkCfg(st).on?'checked':''} style="width:20px;height:20px"> פעיל</label>
     <div class="row2">
       <div class="field" style="flex:1"><label for="wb">על שבוע מלא (₪)</label><input id="wb" type="number" inputmode="decimal" min="0" value="${walkCfg(st).bonus}"></div>
       <div class="field" style="flex:1"><label for="wsb">על 4 שבועות ברצף (₪)</label><input id="wsb" type="number" inputmode="decimal" min="0" value="${walkCfg(st).streakBonus}"></div>
     </div>
     <div class="field"><label>ימי לימודים</label><div class="chips">${DAYS.map((d,i)=>`<button class="chip ${walkCfg(st).days.includes(i)?'on':''}" data-wd="${i}">${d}</button>`).join('')}</div></div>
+    <button class="linkbtn" id="rem2" style="margin:0 0 14px">⏰ תזכורת יומית בטלפון</button>
     <button class="primary" id="sv">שמירה</button>
     <h2>המשתמש של ${esc(st.childName)}</h2>
     ${kids.length ? `
@@ -893,6 +870,7 @@ function openSettings(){
     const changed = r => r.period!==old.period || r.every!==old.every || (r.period==='week' ? r.payday!==old.payday : r.monthDay!==old.monthDay);
     bindSched(changed);
     $('#sheet').querySelectorAll('[data-wd]').forEach(b=>b.onclick=()=>b.classList.toggle('on'));
+    $('#rem2').onclick = openRemind;
     $('#sv').onclick = async()=>{
       const r = readSched();
       const wd = [...$('#sheet').querySelectorAll('[data-wd].on')].map(b=>+b.dataset.wd);
