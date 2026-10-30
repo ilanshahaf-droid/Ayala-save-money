@@ -138,6 +138,11 @@ h2{font-size:15px;font-weight:600;color:var(--muted);margin:22px 0 8px}
 .walk{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;padding:9px 11px 8px;margin:10px 0 2px}
 .walk .wh{display:flex;justify-content:space-between;align-items:center;gap:6px;margin-bottom:6px}
 .walk .wh b{font-size:14px;white-space:nowrap}
+.walk .wt{display:flex;align-items:center;gap:6px;min-width:0}
+.info{width:20px;height:20px;flex:none;border-radius:50%;border:1.5px solid var(--muted);background:none;color:var(--muted);font:italic 700 12px/1 Georgia,serif;padding:0;display:grid;place-items:center}
+.infobox p{margin:0 0 12px;line-height:1.6;display:flex;gap:10px;align-items:flex-start;font-size:17px}
+.infobox p:last-child{margin-bottom:0}
+.infobox .ib{font-size:22px;line-height:1.2;flex:none}
 .walk .nav{display:flex;align-items:center;gap:2px;font-size:12px;color:var(--muted)}
 .walk .nav span{white-space:nowrap;min-width:4.2em;text-align:center}
 .walk .nav button{display:grid;place-items:center;padding:0;color:var(--ink);border:1px solid var(--line);background:var(--bg);border-radius:999px;width:24px;height:24px;flex:none}
@@ -558,11 +563,29 @@ function walkHTML(st, ro, isP){
   }
   const arrow = d => `<svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   return `<div class="walk">
-    <div class="wh"><b>🚶 ${WALK_NAME}</b>
+    <div class="wh"><span class="wt"><b>🚶 ${WALK_NAME}</b><button class="info" data-a="walkinfo" aria-label="הסבר על ${WALK_NAME}">i</button></span>
       <div class="nav"><button data-wk="-1" ${walkWeek<=-8?'disabled':''} aria-label="שבוע קודם">${arrow('M5 2l5 5-5 5')}</button><span>${label}</span><button data-wk="1" ${walkWeek>=(isP?4:0)?'disabled':''} aria-label="שבוע הבא">${arrow('M9 2L4 7l5 5')}</button></div></div>
     <div class="batt ${full?'full':''}"><div class="cell">${segs}</div><span class="nub"></span></div>
     <div class="ws"><span>${done}/${total} · ${status}</span>${flames}</div>
   </div>`;
+}
+
+function openWalkInfo(){
+  const st = S.settings || {}, c = walkCfg(st), isP = role==='parent', sc = sched(st);
+  const allowance = +st.weekly || 0;
+  // a month's pocket money + 4 full weeks + the streak bonus
+  const perMonth = sc.period==='month' ? (sc.every===1 ? allowance : 0) : allowance * (sc.every===1 ? 4 : sc.every===2 ? 2 : 1);
+  const top = perMonth + 4*c.bonus + c.streakBonus;
+  const fullTxt = `הלכת שבוע מלא לבית הספר? קיבלת בונוס של ₪${fmt(c.bonus)}.`;
+  const streakTxt = c.streakBonus > 0 ? `הלכת 4 שבועות מלאים רצופים? תקבלי בונוס נוסף של ₪${fmt(c.streakBonus)}${perMonth>0?` ותוכלי להגיע ל-₪${fmt(top)} דמי כיס בחודש הבא`:''}.` : '';
+  openSheet(`<h3>🚶 ${WALK_NAME}</h3>
+    <div class="infobox">
+      <p><span class="ib">🔋</span>${fullTxt}</p>
+      ${streakTxt ? `<p><span class="ib">🔥</span>${streakTxt}</p>` : ''}
+    </div>
+    ${isP ? `<p class="hint" style="margin:12px 0 0">לחיצה על יום בסוללה: הלכה ← אין לימודים ← ריק. ימים בלי לימודים אפשר לסמן גם מראש, והם לא שוברים את הרצף.</p>`
+          : `<p class="hint" style="margin:12px 0 0">בכל יום שהלכת לבית הספר, תסמני ותראי כמה התקדמת</p>`}
+    <button class="primary" data-close style="margin-top:16px">הבנתי</button>`);
 }
 
 async function tapWalk(k){
@@ -789,6 +812,7 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeSheet(); });
 
 function openAction(a){
   if(a==='remind') return openRemind();
+  if(a==='walkinfo') return openWalkInfo();
   const N = names(), st = S.settings, isP = role==='parent', by = isP?'parent':'child';
   if(a==='allow'){
     const k = periodKey(st, Date.now());
@@ -846,7 +870,6 @@ function openSettings(){
     <h2>דמי כיס</h2>
     ${schedFields(st)}
     <h2>בונוס הליכה לבית הספר</h2>
-    <p class="hint" style="margin:0 0 10px">לחיצה על יום בסוללה: הלכה ← אין לימודים ← ריק. ימים בלי לימודים אפשר לסמן גם מראש.</p>
     <label style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><input type="checkbox" id="won" ${walkCfg(st).on?'checked':''} style="width:20px;height:20px"> פעיל</label>
     <div class="row2">
       <div class="field" style="flex:1"><label for="wb">על שבוע מלא (₪)</label><input id="wb" type="number" inputmode="decimal" min="0" value="${walkCfg(st).bonus}"></div>
