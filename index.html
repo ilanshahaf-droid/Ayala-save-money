@@ -142,7 +142,7 @@ h2{font-size:15px;font-weight:600;color:var(--muted);margin:22px 0 8px}
 .info{width:20px;height:20px;flex:none;border-radius:50%;border:1.5px solid var(--muted);background:none;color:var(--muted);font:italic 700 12px/1 Georgia,serif;padding:0;display:grid;place-items:center}
 .infobox p{margin:0 0 12px;line-height:1.6;display:flex;gap:10px;align-items:flex-start;font-size:17px}
 .infobox p:last-child{margin-bottom:0}
-.infobox .ib{font-size:22px;line-height:1.2;flex:none}
+.infobox .ib{font-size:20px;line-height:1.3;flex:none;min-width:1.2em;text-align:center;font-weight:600;color:var(--mint)}
 .walk .nav{display:flex;align-items:center;gap:2px;font-size:12px;color:var(--muted)}
 .walk .nav span{white-space:nowrap;min-width:4.2em;text-align:center}
 .walk .nav button{display:grid;place-items:center;padding:0;color:var(--ink);border:1px solid var(--line);background:var(--bg);border-radius:999px;width:24px;height:24px;flex:none}
@@ -171,6 +171,8 @@ h2{font-size:15px;font-weight:600;color:var(--muted);margin:22px 0 8px}
 .cele-ic{font-size:56px;line-height:1;margin-top:4px;animation:pop .5s cubic-bezier(.3,1.6,.6,1)}
 @keyframes pop{from{transform:scale(.3);opacity:0}}
 @media (prefers-reduced-motion:reduce){.cele-ic{animation:none}}
+.linkbox{background:var(--paper);border:1.5px solid var(--gold);border-radius:16px;padding:14px;margin:6px 0 4px}
+.linkbox p{color:var(--muted);margin:6px 0 12px;font-size:15px}
 .gbtn{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);border-radius:14px;padding:13px;font-weight:600;font-size:16px}
 .or{display:flex;align-items:center;gap:10px;color:var(--muted);font-size:14px;margin:16px 0}
 .or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
@@ -207,6 +209,11 @@ let lastBal = null;
 /* ---------- Supabase ---------- */
 const CFG = window.PM_CONFIG || {};
 const configured = CFG.url && CFG.anonKey && !CFG.url.includes('YOUR-');
+// error returned from Google sign-in (e.g. #error_description=...)
+(function(){ try{
+  const q = new URLSearchParams((location.hash||'').replace(/^#/,'') + '&' + (location.search||'').replace(/^\?/,''));
+  const d = q.get('error_description'); if(d) setTimeout(()=>toast('הכניסה עם Google לא הצליחה: ' + d), 800);
+}catch(e){} })();
 // simple in-page lock instead of the browser's cross-tab lock, which can get stuck in some browsers (e.g. Samsung Internet)
 let _lockChain = Promise.resolve();
 const pageLock = (name, timeout, fn) => { const r = _lockChain.then(()=>fn()); _lockChain = r.catch(()=>{}); return r; };
@@ -235,9 +242,26 @@ async function googleLogin(){
   const { error } = await sb.auth.signInWithOAuth({ provider:'google', options:{ redirectTo: appUrl(), queryParams:{ prompt:'select_account' } } });
   if(error) toast(googleErr(error));
 }
-async function linkGoogle(){
-  const { error } = await sb.auth.linkIdentity({ provider:'google', options:{ redirectTo: appUrl(), queryParams:{ prompt:'select_account' } } });
-  if(error) toast(googleErr(error));
+function openLinkGoogle(){
+  const uname = (S.me && S.me.username) || '';
+  openSheet(`<h3>חיבור חשבון Google</h3>
+    <div class="infobox">
+      <p><span class="ib">1</span>בוחרים את חשבון ה-Google שלך.</p>
+      <p><span class="ib">2</span>מזינים פעם אחת את שם המשתמש והסיסמה של הקופה, כדי לאשר שזה את/ה.</p>
+      <p><span class="ib">3</span>מאז אפשר להיכנס עם Google, בלי סיסמה.</p>
+    </div>
+    <button class="gbtn" id="go2" style="margin-top:16px">${GICON}<span>המשך ל-Google</span></button>
+    <button class="ghost" data-close>ביטול</button>`, ()=>{
+    $('#go2').onclick = async ()=>{
+      try{ localStorage.setItem('pm-linkuser', uname); }catch(e){}
+      stopSync(); await sb.auth.signOut({ scope:'local' }).catch(()=>{});
+      googleLogin();
+    };
+  });
+}
+async function unlinkGoogle(){
+  if(!confirm('לנתק את חשבון ה-Google מהקופה? אפשר יהיה להיכנס שוב עם שם המשתמש והסיסמה.')) return;
+  if(await safe(()=>rpc('kupa_unlink_me'), 'חשבון ה-Google נותק')) logout();
 }
 function authMsg(e){
   const m = (e && e.message || '').toLowerCase();
@@ -449,7 +473,15 @@ function renderSetup(){
     <h1 style="text-align:center">פותחים קופה</h1>
     <p style="text-align:center">כמה פרטים, ואפשר להתחיל. (אם את הילדה, בקשי מההורה ליצור לך משתמש.)</p>
     ${isGoogleUser(S.session.user)
-      ? `<div class="banner" style="display:block;font-weight:400;background:var(--paper);color:var(--ink);border:1.5px solid var(--gold)">נכנסת עם Google (<b>${esc(googleEmail(S.session.user))}</b>), אבל החשבון הזה עוד לא מחובר לקופה.<br><b>אם כבר יש לך קופה:</b> לחצו "יציאה מהחשבון", היכנסו עם שם המשתמש והסיסמה, ובמסך החשבון לחצו "חיבור חשבון Google".</div>`
+      ? `<div class="linkbox">
+          <b>נכנסת עם Google (${esc(googleEmail(S.session.user))})</b>
+          <p>כבר יש לך קופה? הזינו פעם אחת את שם המשתמש והסיסמה שלה, ומעכשיו אפשר להיכנס עם Google.</p>
+          <div class="field"><label for="lu">שם משתמש בקופה</label><input id="lu" autocomplete="username" autocapitalize="none" spellcheck="false" value="${esc(lsGet('linkuser')||'')}"></div>
+          <div class="field"><label for="lp">סיסמה</label><input id="lp" type="password" autocomplete="current-password"></div>
+          <div class="err" id="ler"></div>
+          <button class="primary" id="lk">חיבור לקופה</button>
+        </div>
+        <div class="or"><span>או קופה חדשה</span></div>`
       : `<p class="hint" style="text-align:center">מחובר כ-<b>${esc(displayName(S.session.user))}</b>. אם כבר יש לך קופה, צא מהחשבון והתחבר עם המשתמש הנכון.</p>`}
     <div class="field"><label for="cn">שם הבת</label><input id="cn" placeholder="למשל: נועה" autocomplete="off"></div>
     <div class="field"><label for="pl">איך היא קוראת לך?</label><input id="pl" value="אבא" autocomplete="off"></div>
@@ -460,6 +492,20 @@ function renderSetup(){
     <button class="ghost" id="lo">יציאה מהחשבון</button>
   </div>`, ()=>{
     bindSched(()=>true);
+    const lk = $('#lk'); if(lk) lk.onclick = async ()=>{
+      const u = $('#lu').value.trim(), pw = $('#lp').value, er = $('#ler'); er.textContent = '';
+      if(!u || !pw){ er.textContent = 'צריך שם משתמש וסיסמה'; return; }
+      lk.disabled = true;
+      try{
+        await rpc('kupa_link_by_password', { p_username: u, p_password: pw });
+        try{ localStorage.removeItem('pm-linkuser'); }catch(e){}
+        toast('חשבון Google חובר לקופה ✓'); S.me = null; app.dataset.view = ''; await loadMe();
+      }catch(e){
+        const m = (e && e.message || '');
+        er.textContent = m.includes('bad credentials') ? 'שם המשתמש או הסיסמה לא נכונים' : m.includes('could not find') || m.includes('does not exist') ? 'צריך להריץ את google-link.sql ב-Supabase' : 'החיבור לא הצליח: ' + m;
+        lk.disabled = false;
+      }
+    };
     $('#lo').onclick = logout;
     $('#go').onclick = async () => {
       const cn = $('#cn').value.trim(); if(!cn){ $('#er').textContent='צריך שם כדי להמשיך'; return; }
@@ -834,12 +880,12 @@ function openAccount(){
     <p style="color:var(--muted);margin:0 0 16px">${role==='parent'?'חשבון הורה':'חשבון של '+esc(names().child)}</p>
     ${walkCfg(S.settings).on ? '<button class="primary" id="rem" style="background:var(--lilac);margin-bottom:10px">⏰ תזכורת יומית לסמן הליכה</button>' : ''}
     ${(()=>{ const u = S.session && S.session.user;
-      return isGoogleUser(u)
-        ? `<div class="gok">${GICON}<span>מחובר ל-Google: <b>${esc(googleEmail(u))}</b></span></div>`
+      return S.me && S.me.linked
+        ? `<div class="gok">${GICON}<span>מחובר עם Google: <b>${esc(googleEmail(u))}</b></span></div><button class="linkbtn" id="ul" style="display:block;margin:-6px auto 14px">ניתוק Google</button>`
         : `<button class="gbtn" id="lg" style="margin-bottom:6px">${GICON}<span>חיבור חשבון Google</span></button>
            <p class="hint" style="margin:0 0 12px;text-align:center">אחרי החיבור אפשר להיכנס גם עם Google, בלי סיסמה.</p>`; })()}
     <button class="primary" id="lo">יציאה מהחשבון</button>
-    <button class="ghost" data-close>סגירה</button>`, ()=>{ $('#lo').onclick = logout; const r=$('#rem'); if(r) r.onclick = openRemind; const lg=$('#lg'); if(lg) lg.onclick = linkGoogle; });
+    <button class="ghost" data-close>סגירה</button>`, ()=>{ $('#lo').onclick = logout; const r=$('#rem'); if(r) r.onclick = openRemind; const lg=$('#lg'); if(lg) lg.onclick = openLinkGoogle; const ul=$('#ul'); if(ul) ul.onclick = unlinkGoogle; });
 }
 async function approve(id, yes){
   const r = S.req.find(x=>x.id===id); if(!r) return;
@@ -985,7 +1031,6 @@ if(sb){
     .catch(e=>{ clearTimeout(authTimer); console.error(e); S.authSlow = true; render(); });
   sb.auth.onAuthStateChange((ev, session)=>{
     if(session && session.user.is_anonymous) session = null;
-    if(ev === 'USER_UPDATED' && session && isGoogleUser(session.user) && !(S.session && isGoogleUser(S.session.user))) setTimeout(()=>toast('חשבון Google חובר ✓'), 300);
     const was = S.session && S.session.user.id;
     S.session = session; S.authChecked = true;
     if(session && session.user.id !== was){ S.me = null; render(); loadMe(); }
