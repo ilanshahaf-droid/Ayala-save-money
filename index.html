@@ -244,7 +244,10 @@ const store = {
 };
 
 async function loadMe(){
-  try { S.me = await rpc('kupa_me'); } catch(e){ S.me = {family:null}; toast('לא הצלחנו לטעון את החשבון'); }
+  S.meError = null;
+  try { S.me = await rpc('kupa_me'); }
+  catch(e){ console.error(e); S.me = null; S.meError = (e && e.message) || 'error'; render(); return; }
+  if(!S.me || typeof S.me !== 'object'){ S.me = null; S.meError = 'empty'; render(); return; }
   role = S.me && S.me.role;
   if(S.me && S.me.family) startSync(); else render();
 }
@@ -356,8 +359,15 @@ function show(name, html, bind, sticky){
 }
 function render(){
   if(!sb) return show('nocfg', `<div class="pick"><h1>כמעט מוכן</h1><p>צריך להדביק את כתובת ה-Supabase והמפתח בקובץ config.js.</p></div>`);
+  if(!S.authChecked && S.authSlow) return show('authslow', `<div class="pick"><h1>השרת לא עונה</h1>
+    <p>הנתונים שמורים, אבל כרגע אין חיבור לשרת של הקופה. בדקו את האינטרנט ונסו שוב בעוד כמה דקות.</p>
+    <button class="primary" id="rt">לנסות שוב</button></div>`, ()=>{ $('#rt').onclick = ()=>location.reload(); });
   if(!S.authChecked) return show('load', '<div class="pick"><p>רגע…</p></div>');
   if(!S.session) return renderLogin();
+  if(!S.me && S.meError) return show('meerr', `<div class="pick"><h1>לא הצלחנו להגיע לקופה</h1>
+    <p>הנתונים שמורים, רק החיבור לא הצליח הפעם. בדקו את האינטרנט ונסו שוב.</p>
+    <button class="primary" id="rt">לנסות שוב</button><button class="ghost" id="lo">יציאה מהחשבון</button></div>`,
+    ()=>{ $('#rt').onclick = ()=>{ S.meError = null; render(); loadMe(); }; $('#lo').onclick = logout; });
   if(!S.me) return show('load', '<div class="pick"><p>פותחים את הקופה…</p></div>');
   if(!S.me.family) return renderSetup();
   if(!S.loaded.tx) return show('load', '<div class="pick"><p>פותחים את הקופה…</p></div>');
@@ -406,6 +416,7 @@ function renderSetup(){
   show('setup', `<div class="pick" style="text-align:right">
     <h1 style="text-align:center">פותחים קופה</h1>
     <p style="text-align:center">כמה פרטים, ואפשר להתחיל. (אם את הילדה, בקשי מההורה ליצור לך משתמש.)</p>
+    <p class="hint" style="text-align:center">מחובר כ-<b>${esc((S.session.user.user_metadata||{}).username || '')}</b>. אם כבר יש לך קופה, צא מהחשבון והתחבר עם המשתמש הנכון.</p>
     <div class="field"><label for="cn">שם הבת</label><input id="cn" placeholder="למשל: נועה" autocomplete="off"></div>
     <div class="field"><label for="pl">איך היא קוראת לך?</label><input id="pl" value="אבא" autocomplete="off"></div>
     ${schedFields(null)}
@@ -929,7 +940,10 @@ function openSettings(){
 
 /* ---------- start ---------- */
 if(sb){
-  sb.auth.getSession().then(({data})=>{ S.session = data.session; S.authChecked = true; if(S.session) loadMe(); else render(); });
+  // don't wait forever if the server doesn't answer
+  const authTimer = setTimeout(()=>{ if(!S.authChecked){ S.authSlow = true; render(); } }, 10000);
+  sb.auth.getSession().then(({data})=>{ clearTimeout(authTimer); S.authSlow = false; S.session = data.session; S.authChecked = true; if(S.session) loadMe(); else render(); })
+    .catch(e=>{ clearTimeout(authTimer); console.error(e); S.authSlow = true; render(); });
   sb.auth.onAuthStateChange((ev, session)=>{
     const was = S.session && S.session.user.id;
     S.session = session; S.authChecked = true;
