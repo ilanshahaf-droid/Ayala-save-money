@@ -202,7 +202,10 @@ let lastBal = null;
 /* ---------- Supabase ---------- */
 const CFG = window.PM_CONFIG || {};
 const configured = CFG.url && CFG.anonKey && !CFG.url.includes('YOUR-');
-const sb = configured && window.supabase ? window.supabase.createClient(CFG.url, CFG.anonKey) : null;
+// simple in-page lock instead of the browser's cross-tab lock, which can get stuck in some browsers (e.g. Samsung Internet)
+let _lockChain = Promise.resolve();
+const pageLock = (name, timeout, fn) => { const r = _lockChain.then(()=>fn()); _lockChain = r.catch(()=>{}); return r; };
+const sb = configured && window.supabase ? window.supabase.createClient(CFG.url, CFG.anonKey, { auth:{ lock: pageLock, storageKey: 'hakupa-auth' } }) : null;
 let channel = null, pollT = null;
 
 function toEmail(u){
@@ -942,9 +945,10 @@ function openSettings(){
 if(sb){
   // don't wait forever if the server doesn't answer
   const authTimer = setTimeout(()=>{ if(!S.authChecked){ S.authSlow = true; render(); } }, 10000);
-  sb.auth.getSession().then(({data})=>{ clearTimeout(authTimer); S.authSlow = false; S.session = data.session; S.authChecked = true; if(S.session) loadMe(); else render(); })
+  sb.auth.getSession().then(({data})=>{ clearTimeout(authTimer); S.authSlow = false; S.session = data.session && !data.session.user.is_anonymous ? data.session : null; S.authChecked = true; if(S.session) loadMe(); else render(); })
     .catch(e=>{ clearTimeout(authTimer); console.error(e); S.authSlow = true; render(); });
   sb.auth.onAuthStateChange((ev, session)=>{
+    if(session && session.user.is_anonymous) session = null;
     const was = S.session && S.session.user.id;
     S.session = session; S.authChecked = true;
     if(session && session.user.id !== was){ S.me = null; render(); loadMe(); }
