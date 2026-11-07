@@ -958,6 +958,24 @@ function openAction(a){
   });
 }
 
+/* ---------- link to the budget app ---------- */
+async function sha256hex(t){ const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(t)); return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join(''); }
+async function makeBudgetCode(){
+  if(S.settings.budgetKeyHash && !confirm('ליצור קוד חדש? הקוד הקודם יפסיק לעבוד, וצריך יהיה להדביק את החדש באפליקציית התקציב.')) return;
+  const a = new Uint8Array(24); crypto.getRandomValues(a);
+  const secret = [...a].map(x=>x.toString(16).padStart(2,'0')).join('');
+  const hash = await sha256hex(secret);
+  if(!(await safe(()=>store.updateSettings({ budgetKeyHash: hash })))) return;
+  const code = 'KUPA1:' + btoa(unescape(encodeURIComponent(JSON.stringify({ u: CFG.url, k: CFG.anonKey, s: secret, n: names().child }))));
+  // the budget app runs on the same site, so in this browser it can pick the code up by itself
+  try{ localStorage.setItem('kupaBudgetLink', code); }catch(e){}
+  $('#bkOut').innerHTML = `<p class="hint" style="margin:8px 0 6px">באפליקציית התקציב: הגדרות ← "הקופה (דמי כיס)" ← הדבקת הקוד. בדפדפן הזה הקוד יזוהה לבד.</p>
+    <textarea id="bkCode" readonly rows="3" style="width:100%;direction:ltr;font-size:12px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);padding:8px">${esc(code)}</textarea>
+    <button class="primary" id="bkCopy" style="background:var(--lilac);margin-top:6px">העתקת הקוד</button>`;
+  $('#bkCopy').onclick = async ()=>{ try{ await navigator.clipboard.writeText(code); toast('הקוד הועתק'); }catch(e){ $('#bkCode').select(); toast('סמנו והעתיקו את הקוד'); } };
+  toast('קוד החיבור נוצר');
+}
+
 function openSettings(){
   const st = S.settings, kids = (S.me.members||[]).filter(m=>m.role==='child');
   openSheet(`<h3>הגדרות</h3>
@@ -984,7 +1002,12 @@ function openSettings(){
       <div class="field"><label for="cp">סיסמה בשבילה (לפחות 6 תווים)</label><input id="cp" type="text" autocomplete="off" style="direction:ltr"></div>
       <div class="err" id="er"></div>
       <button class="primary" id="mk" style="background:var(--lilac)">יצירת המשתמש שלה</button>`}
+    <h2>חיבור לאפליקציית התקציב</h2>
+    <p class="hint" style="margin:0 0 10px">${st.budgetKeyHash ? '✓ מחובר. התקציב מקבל כל חודש את הסכום שנתת: דמי כיס, בונוסים ובקשות שאישרת, פחות משיכות.' : 'אפליקציית "מנהל התקציב שלי" תקבל כל חודש את הסכום שנתת בפועל: דמי כיס, בונוסים ובקשות שאישרת, פחות משיכות.'}</p>
+    <button class="linkbtn" id="bk" style="margin:0 0 6px">${st.budgetKeyHash ? 'יצירת קוד חדש (הקוד הקודם יפסיק לעבוד)' : '🔗 יצירת קוד חיבור'}</button>
+    <div id="bkOut"></div>
     <button class="ghost" data-close>סגירה</button>`, ()=>{
+    $('#bk').onclick = makeBudgetCode;
     const old = sched(st);
     const changed = r => r.period!==old.period || r.every!==old.every || (r.period==='week' ? r.payday!==old.payday : r.monthDay!==old.monthDay);
     bindSched(changed);
