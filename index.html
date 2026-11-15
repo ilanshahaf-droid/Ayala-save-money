@@ -609,7 +609,24 @@ function walkCfg(st){
   return { on: st.walkOn !== false, days,
     bonus: st.walkBonus == null ? 5 : +st.walkBonus,
     streakBonus: st.walkStreakBonus == null ? 5 : +st.walkStreakBonus,
-    walks: new Set(Array.isArray(st.walks) ? st.walks : []), off: new Set(Array.isArray(st.noSchool) ? st.noSchool : []) };
+    walks: new Set(Array.isArray(st.walks) ? st.walks : []), off: new Set(Array.isArray(st.noSchool) ? st.noSchool : []),
+    from: /^\d{4}-\d{2}-\d{2}$/.test(st.walkRuleFrom||'') ? st.walkRuleFrom : null };
+}
+// same rule as the server: every 5 school days walked in a row = bonus, every 20 = streak bonus.
+// "no school" days are skipped; today (not marked yet) doesn't break the run; a past school day without a walk does.
+function runInfo(c){
+  const today = ymd(new Date());
+  const d = c.from ? new Date(c.from+'T00:00:00') : (()=>{ const x = new Date(); x.setHours(0,0,0,0); x.setDate(x.getDate()-63); return x; })();
+  let run = 0; const m5 = [], m20 = [], at = {};
+  for(let i=0; i<800; i++){
+    const k = ymd(d); if(k > today) break;
+    if(c.days.includes(d.getDay())){
+      if(c.walks.has(k)){ run++; at[k] = run; if(run%5===0) m5.push(k); if(run%20===0) m20.push(k); }
+      else if(!(c.off.has(k) || k === today)) run = 0;
+    }
+    d.setDate(d.getDate()+1);
+  }
+  return { run, m5, m20, at };
 }
 function weekSun(offset){ const d = new Date(); d.setHours(0,0,0,0); d.setDate(d.getDate()-d.getDay()+7*offset); return d; }
 function sunOf(k){ const d = new Date(k+'T00:00:00'); d.setDate(d.getDate()-d.getDay()); return d; }
@@ -643,21 +660,21 @@ function walkHTML(st, ro, isP){
   }).join('');
   const total = n - offN, left = total - done, full = weekDone(c, sun);
   const label = walkWeek===0 ? 'השבוע' : walkWeek===-1 ? 'שבוע שעבר' : walkWeek===1 ? 'שבוע הבא' : walkWeek===-2 ? 'לפני שבועיים' : walkWeek===2 ? 'בעוד שבועיים' : walkWeek<0 ? `לפני ${-walkWeek} שבועות` : `בעוד ${walkWeek} שבועות`;
-  const status = full ? `<b>⚡ שבוע מלא! +₪${fmt(c.bonus)}</b>`
-    : total === 0 ? 'אין לימודים'
-    : `עוד ${left===1?'יום':left+' ימים'} ל-₪${fmt(c.bonus)}`;
+  const R = runInfo(c), run = R.run, need = 5 - run % 5;
+  const status = walkWeek !== 0 ? `${done}/${total} השבוע`
+    : run > 0 && run % 5 === 0 && R.m5[R.m5.length-1] === today ? `<b>⚡ ${run} ימים ברצף! +₪${fmt(c.bonus)}</b>`
+    : `רצף: ${run===1?'יום אחד':run+' ימים'} · עוד ${need===1?'יום':need+' ימים'} ל-₪${fmt(c.bonus)}`;
   let flames = '';
   if(c.streakBonus > 0 && walkWeek === 0){
-    const thisDone = weekDone(c, weekSun(0)), streak = walkStreak(c);
-    const filled = thisDone && streak > 0 && streak % 4 === 0 ? 4 : streak % 4;
-    flames = `<span class="flames" title="רצף שבועות מלאים: ${filled} מתוך 4 (בונוס רצף ₪${fmt(c.streakBonus)})" aria-label="רצף: ${filled} מתוך 4 שבועות">🔥${[0,1,2,3].map(j=>`<i class="${j<filled?'on':''}"></i>`).join('')}</span>`;
+    const filled = run > 0 && run % 20 === 0 ? 4 : Math.floor((run % 20) / 5);
+    flames = `<span class="flames" title="${run%20||(run?20:0)} מתוך 20 ימים ברצף (בונוס רצף ₪${fmt(c.streakBonus)})" aria-label="רצף: ${filled} מתוך 4 חמישיות">🔥${[0,1,2,3].map(j=>`<i class="${j<filled?'on':''}"></i>`).join('')}</span>`;
   }
   const arrow = d => `<svg width="12" height="12" viewBox="0 0 14 14" aria-hidden="true"><path d="${d}" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
   return `<div class="walk">
     <div class="wh"><span class="wt"><b>🚶 ${WALK_NAME}</b><button class="info" data-a="walkinfo" aria-label="הסבר על ${WALK_NAME}">i</button></span>
       <div class="nav"><button data-wk="-1" ${walkWeek<=-8?'disabled':''} aria-label="שבוע קודם">${arrow('M5 2l5 5-5 5')}</button><span>${label}</span><button data-wk="1" ${walkWeek>=(isP?4:0)?'disabled':''} aria-label="שבוע הבא">${arrow('M9 2L4 7l5 5')}</button></div></div>
     <div class="batt ${full?'full':''}"><div class="cell">${segs}</div><span class="nub"></span></div>
-    <div class="ws"><span>${done}/${total} · ${status}</span>${flames}</div>
+    <div class="ws"><span>${status}</span>${flames}</div>
   </div>`;
 }
 
@@ -667,14 +684,14 @@ function openWalkInfo(){
   // a month's pocket money + 4 full weeks + the streak bonus
   const perMonth = sc.period==='month' ? (sc.every===1 ? allowance : 0) : allowance * (sc.every===1 ? 4 : sc.every===2 ? 2 : 1);
   const top = perMonth + 4*c.bonus + c.streakBonus;
-  const fullTxt = `הלכת שבוע מלא לבית הספר? קיבלת בונוס של ₪${fmt(c.bonus)}.`;
-  const streakTxt = c.streakBonus > 0 ? `הלכת 4 שבועות מלאים רצופים? תקבלי בונוס נוסף של ₪${fmt(c.streakBonus)}${perMonth>0?` ותוכלי להגיע ל-₪${fmt(top)} דמי כיס בחודש הבא`:''}.` : '';
+  const fullTxt = `הלכת 5 ימים ברצף לבית הספר? קיבלת בונוס של ₪${fmt(c.bonus)}.`;
+  const streakTxt = c.streakBonus > 0 ? `הלכת 20 ימים ברצף? תקבלי בונוס נוסף של ₪${fmt(c.streakBonus)}${perMonth>0?` ותוכלי להגיע ל-₪${fmt(top)} דמי כיס בחודש הבא`:''}.` : '';
   openSheet(`<h3>🚶 ${WALK_NAME}</h3>
     <div class="infobox">
       <p><span class="ib">🔋</span>${fullTxt}</p>
       ${streakTxt ? `<p><span class="ib">🔥</span>${streakTxt}</p>` : ''}
     </div>
-    ${isP ? `<p class="hint" style="margin:12px 0 0">לחיצה על יום בסוללה: הלכה ← אין לימודים ← ריק. ימים בלי לימודים אפשר לסמן גם מראש, והם לא שוברים את הרצף.</p>`
+    ${isP ? `<p class="hint" style="margin:12px 0 0">הרצף נמשך גם משבוע לשבוע. ימים בלי לימודים לא נספרים ולא שוברים את הרצף; יום לימודים שעבר בלי הליכה מתחיל אותו מחדש.<br>לחיצה על יום בסוללה: הלכה ← אין לימודים ← ריק. ימים בלי לימודים אפשר לסמן גם מראש.</p>`
           : `<p class="hint" style="margin:12px 0 0">בכל יום שהלכת לבית הספר, תסמני ותראי כמה התקדמת</p>`}
     <button class="primary" data-close style="margin-top:16px">הבנתי</button>`);
 }
@@ -694,16 +711,17 @@ async function tapWalk(k){
 }
 async function setWalk(k, next){
   const c = walkCfg(S.settings);
-  const sun = sunOf(k), before = weekDone(c, sun);
+  const before = runInfo(c);
   const w = new Set(c.walks), o = new Set(c.off);
   w.delete(k); o.delete(k); if(next==='walk') w.add(k); if(next==='off') o.add(k);
   S.settings = {...S.settings, walks:[...w], noSchool:[...o]}; render();
   const ok = await safe(()=>write('kupa_set_walk_day', {p_date:k, p_state:next}));
   if(ok){
-    const c2 = walkCfg(S.settings), after = weekDone(c2, sun);
-    if(after && !before){ seen('cel-'+ymd(sun)); celebrate(sun); }
-    else if(!after && before && c2.bonus>0) toast(WALK_NAME+' של השבוע הוסר');
-    else if(next==='walk' && !after) toast('סומן ✓');
+    const after = runInfo(walkCfg(S.settings));
+    const fresh = after.m5.filter(x=>!before.m5.includes(x));
+    if(fresh.length){ const last = fresh[fresh.length-1]; fresh.forEach(x=>seen('cel5-'+x)); celebrate(last); }
+    else if(before.m5.some(x=>!after.m5.includes(x))) toast('הבונוס הוסר, כי הרצף השתנה');
+    else if(next==='walk') toast('סומן ✓');
   } else refresh();
 }
 
@@ -711,19 +729,19 @@ async function setWalk(k, next){
 const lsGet = k => { try { return localStorage.getItem('pm-'+k); } catch(e){ return null; } };
 function seen(k){ try { localStorage.setItem('pm-'+k, '1'); } catch(e){} }
 function pick(a){ return a[Math.floor(Math.random()*a.length)]; }
-function celebrate(sun){
-  const c = walkCfg(S.settings), N = names(), isP = role==='parent';
-  const run = runEndingAt(c, sun);
-  const streakHit = c.streakBonus > 0 && run > 0 && run % 4 === 0;
+function celebrate(k){
+  const c = walkCfg(S.settings), N = names(), isP = role==='parent', R = runInfo(c);
+  const run = R.at[k] || 5;
+  const streakHit = c.streakBonus > 0 && R.m20.includes(k);
   const got = (c.bonus||0) + (streakHit ? c.streakBonus : 0);
-  const title = isP ? `${esc(N.child)} השלימה שבוע מלא!`
+  const title = isP ? `${esc(N.child)} הלכה ${run} ימים ברצף!`
     : pick([`כל הכבוד, ${esc(N.child)}!`, `איזה יופי, ${esc(N.child)}!`, `את אלופה, ${esc(N.child)}!`, `וואו, ${esc(N.child)}!`]);
-  let body = isP ? `היא הלכה לבית הספר כל השבוע.` : pick(['הלכת לבית הספר כל השבוע. זה ממש לא מובן מאליו!', 'הלכת ברגל כל השבוע, יום אחרי יום. זה דורש התמדה, והצלחת!', 'שבוע שלם של הליכה לבית הספר. את יכולה להיות גאה בעצמך!']);
+  let body = isP ? `${run} ימי לימודים ברצף של הליכה לבית הספר.` : pick([`הלכת לבית הספר ${run} ימים ברצף. זה ממש לא מובן מאליו!`, `${run} ימים ברצף, יום אחרי יום. זה דורש התמדה, והצלחת!`, `${run} ימים של הליכה לבית הספר ברצף. את יכולה להיות גאה בעצמך!`]);
   if(got > 0) body += `<br><b class="bigplus">+₪${fmt(got)}</b> ${isP?'נוספו לקופה שלה':'נוספו לקופה שלך'}`;
-  if(streakHit) body += `<br>🔥 ${run===4?'4 שבועות':run+' שבועות'} ברצף! ${isP?'היא קיבלה':'קיבלת'} גם בונוס רצף של ₪${fmt(c.streakBonus)}.`;
-  else if(c.streakBonus > 0 && run > 0){
-    const need = 4 - run % 4;
-    body += `<br>🔥 ${run===1?'שבוע ראשון ברצף':'שבוע '+run+' ברצף'}. עוד ${need===1?'שבוע אחד':need+' שבועות'} לבונוס רצף של ₪${fmt(c.streakBonus)}${isP?'.':' — ממשיכים ככה!'}`;
+  if(streakHit) body += `<br>🔥 ${run} ימים ברצף! ${isP?'היא קיבלה':'קיבלת'} גם בונוס רצף של ₪${fmt(c.streakBonus)}.`;
+  else if(c.streakBonus > 0){
+    const need = 20 - run % 20;
+    body += `<br>🔥 עוד ${need} ימים ברצף לבונוס רצף של ₪${fmt(c.streakBonus)}${isP?'.':' — ממשיכים ככה!'}`;
   }
   openSheet(`<div class="cele"><div class="cele-ic">${streakHit?'🏆':'🎉'}</div><h3>${title}</h3><p>${body}</p>
     <button class="primary" data-close>${isP?'מעולה':'יש! 🙌'}</button></div>`);
@@ -731,11 +749,10 @@ function celebrate(sun){
 function maybePrompts(){
   if(!S.settings || !S.me || !S.me.family || $('#scrim').classList.contains('on') || app.dataset.view !== 'main') return;
   const c = walkCfg(S.settings); if(!c.on) return;
-  // 1) a full week finished that this device hasn't celebrated yet (this week or last week)
-  for(const off of [0,-1]){
-    const sun = weekSun(off), key = 'cel-'+ymd(sun);
-    if(weekDone(c, sun) && !lsGet(key)){ seen(key); celebrate(sun); return; }
-  }
+  // 1) a 5-day bonus from the last two weeks that this device hasn't celebrated yet
+  const R = runInfo(c), cut = (()=>{ const x = new Date(); x.setDate(x.getDate()-14); return ymd(x); })();
+  const todo = R.m5.filter(k=>k >= cut && !lsGet('cel5-'+k));
+  if(todo.length){ todo.forEach(k=>seen('cel5-'+k)); celebrate(todo[todo.length-1]); return; }
   // 2) daily reminder on opening the app (her account): school day, after 8:00, today not marked yet
   if(role !== 'child' || S.canWrite === false) return;
   const now = new Date(), today = ymd(now);
@@ -823,7 +840,8 @@ function renderMain(){
       <button class="act plus" data-a="allow"><span>＋</span>דמי כיס ₪${fmt(+st.weekly||0)}</button>
       <button class="act plus" data-a="bonus" style="background:var(--lilac)"><span>★</span>בונוס / סכום אחר</button>
       <button class="act minus" data-a="spend"><span>−</span>הוצאה</button>
-      <button class="act soft" data-a="take"><span>↩</span>משיכה / תיקון</button>` : `
+      <button class="act soft" data-a="take"><span>↩</span>משיכה / תיקון</button>
+      <button class="act soft wide" data-a="gift"><span>🎁</span>מתנה ממישהו אחר</button>` : `
       <button class="act minus" data-a="spend"><span>−</span>הוצאתי</button>
       <button class="act plus" data-a="gift"><span>＋</span>קיבלתי כסף</button>
       <button class="act soft wide" data-a="ask">🙋 בקשה מ${esc(N.parent)}</button>`;
@@ -931,7 +949,7 @@ function openAction(a){
   }
   const cfg = {
     spend:{t: isP?'הוצאה מהקופה':'הוצאתי', btn:'רישום ההוצאה', sign:-1, type:'spend', cats:true, ph:'על מה?'},
-    gift:{t:'קיבלתי כסף', btn:'הוספה לקופה', sign:1, type:'gift', ph:'ממי? (למשל: סבתא)'},
+    gift:{t: isP?'מתנה ממישהו אחר':'קיבלתי כסף', btn:'הוספה לקופה', sign:1, type:'gift', ph:'ממי? (למשל: סבתא)', hint: isP?'לא נספר בתקציב, כי זה לא כסף שנתת.':''},
     bonus:{t:'בונוס / סכום אחר', btn:'הוספה לקופה', sign:1, type:'bonus', ph:'על מה? (למשל: עזרה בבית)'},
     take:{t:'משיכה / תיקון', btn:'הורדה מהקופה', sign:-1, type:'take', ph:'סיבה'},
     ask:{t:'בקשה מ'+N.parent, btn:'שליחת הבקשה', sign:1, type:'ask', ph:'בשביל מה?'}
@@ -939,6 +957,7 @@ function openAction(a){
   let cat = null;
   openSheet(`<h3>${esc(cfg.t)}</h3>
     <div class="field big"><label for="am">סכום (₪)</label><input id="am" type="number" inputmode="decimal" min="0" step="0.5" placeholder="0"></div>
+    ${cfg.hint?`<p class="hint" style="margin:-6px 0 12px">${cfg.hint}</p>`:''}
     ${cfg.cats?`<div class="field"><label>קטגוריה</label><div class="chips">${CATS.map(c=>`<button class="chip" data-c="${c[1]}">${c[0]} ${c[1]}</button>`).join('')}</div></div>`:''}
     <div class="field"><label for="nt">${cfg.cats?'פירוט (לא חובה)':'הערה'}</label><input id="nt" placeholder="${esc(cfg.ph)}" autocomplete="off"></div>
     <div class="err" id="er"></div>
