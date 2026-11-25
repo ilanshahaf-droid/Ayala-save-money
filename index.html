@@ -178,6 +178,12 @@ h2{font-size:15px;font-weight:600;color:var(--muted);margin:22px 0 8px}
 .or::before,.or::after{content:"";flex:1;height:1px;background:var(--line)}
 .gok{display:flex;align-items:center;justify-content:center;gap:8px;font-size:14px;color:var(--muted);margin:0 0 14px}
 .gok b{color:var(--ink)}
+.bpot{display:flex;align-items:center;gap:12px;background:var(--paper);border:1.5px dashed var(--gold);border-radius:16px;padding:10px 12px;margin:0 0 16px}
+.bpot-ic{font-size:26px;line-height:1;flex:none}
+.bpot-t{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.bpot-t b{font-size:16px}
+.bpot-t small{font-size:13px;color:var(--muted)}
+.bpot-btn{flex:none;border:0;border-radius:12px;padding:9px 12px;background:var(--gold);color:#3a2a00;font-weight:600;font-size:14px}
 .toast{position:fixed;bottom:calc(86px + env(safe-area-inset-bottom,0px));left:50%;transform:translateX(-50%);background:var(--ink);color:var(--paper);padding:10px 18px;border-radius:999px;font-size:15px;opacity:0;transition:opacity .2s;pointer-events:none;z-index:20}
 .toast.on{opacity:1}
 .coin{animation:drop .6s cubic-bezier(.3,1.4,.6,1)}
@@ -323,7 +329,11 @@ async function safe(fn, okMsg){
   catch(e){ console.error(e); toast(!navigator.onLine ? 'אין חיבור לאינטרנט' : (e && e.message && e.message.includes('not allowed')) ? 'אין הרשאה לפעולה הזאת' : 'השמירה לא הצליחה, נסו שוב'); return false; }
 }
 /* ---------- helpers ---------- */
-const balance = () => S.tx.reduce((a,t)=>a+(+t.amount||0),0);
+// two pots: bonuses go to the bonus pot until the parent moves them to the main pot (a 'transfer' tx)
+const inBonusPot = t => t.pot === 'bonus';
+const transfers = () => S.tx.filter(t=>t.type==='transfer').reduce((a,t)=>a+(+t.amount||0),0);
+const balance = () => S.tx.reduce((a,t)=>a+(t.type==='transfer'||inBonusPot(t)?0:(+t.amount||0)),0) + transfers();
+const bonusBalance = () => Math.round((S.tx.reduce((a,t)=>a+(inBonusPot(t)?(+t.amount||0):0),0) - transfers())*100)/100;
 function weekKey(date, payday){
   // start of the "allowance week" that contains date
   const d = new Date(date); d.setHours(0,0,0,0);
@@ -536,12 +546,12 @@ function jarSVG(fill){
 
 function txRow(t, N, isP, ro){
   const cat = t.cat ? CATS.find(c=>c[1]===t.cat) : null;
-  const ic = t.streak?'🔥':t.walk?'🚶':t.type==='allowance'?'🪙':t.type==='bonus'?'⭐':t.type==='gift'?'🎁':t.type==='request'?'🙋':t.type==='start'?'🏦':t.type==='take'?'↩':(cat?cat[0]:'🛍️');
+  const ic = t.type==='transfer'?'↪':t.streak?'🔥':t.walk?'🚶':t.type==='allowance'?'🪙':t.type==='bonus'?'⭐':t.type==='gift'?'🎁':t.type==='request'?'🙋':t.type==='start'?'🏦':t.type==='take'?'↩':(cat?cat[0]:'🛍️');
   const title = t.note || (t.type==='allowance'?'דמי כיס':t.type==='spend'?(t.cat||'הוצאה'):'');
   const by = t.by==='parent'?N.parent:N.child;
   const canDel = !ro && (isP || t.by==='child');
   return `<div class="row"><div class="ic">${ic}</div>
-    <div class="tx"><div class="t">${esc(title)}</div><div class="s">${when(t.ts)} · ${esc(by)}</div></div>
+    <div class="tx"><div class="t">${esc(title)}</div><div class="s">${when(t.ts)} · ${esc(by)}${inBonusPot(t)?' · 🎁 קופת הבונוסים':''}</div></div>
     <div class="amt ${t.amount>=0?'p':'m'}">${t.amount>=0?'+':'−'}₪${fmt(Math.abs(t.amount))}</div>
     ${canDel?`<button class="del" data-del="${t.id}" aria-label="מחיקה">×</button>`:''}</div>`;
 }
@@ -569,7 +579,7 @@ function detailsHTML(N, isP, ro){
   const inRange = S.tx.filter(t=>t.ts>=a && t.ts<b);
   const inc = {}, out = {}; let tin = 0, tout = 0;
   inRange.forEach(t=>{
-    if(t.type==='start') return;
+    if(t.type==='start' || t.type==='transfer') return;
     if(t.amount > 0){
       const [ic,label] = t.walk ? ['🚶','בונוס הליכה לבית הספר'] : (IN_TYPES[t.type] || ['➕','אחר']);
       const g = inc[label] || (inc[label] = {ic,label,sum:0,n:0}); g.sum += t.amount; g.n++; tin += t.amount;
@@ -737,7 +747,7 @@ function celebrate(k){
   const title = isP ? `${esc(N.child)} הלכה ${run} ימים ברצף!`
     : pick([`כל הכבוד, ${esc(N.child)}!`, `איזה יופי, ${esc(N.child)}!`, `את אלופה, ${esc(N.child)}!`, `וואו, ${esc(N.child)}!`]);
   let body = isP ? `${run} ימי לימודים ברצף של הליכה לבית הספר.` : pick([`הלכת לבית הספר ${run} ימים ברצף. זה ממש לא מובן מאליו!`, `${run} ימים ברצף, יום אחרי יום. זה דורש התמדה, והצלחת!`, `${run} ימים של הליכה לבית הספר ברצף. את יכולה להיות גאה בעצמך!`]);
-  if(got > 0) body += `<br><b class="bigplus">+₪${fmt(got)}</b> ${isP?'נוספו לקופה שלה':'נוספו לקופה שלך'}`;
+  if(got > 0) body += `<br><b class="bigplus">+₪${fmt(got)}</b> ${isP?'נוספו לקופת הבונוסים שלה':'נוספו לקופת הבונוסים שלך'}`;
   if(streakHit) body += `<br>🔥 ${run} ימים ברצף! ${isP?'היא קיבלה':'קיבלת'} גם בונוס רצף של ₪${fmt(c.streakBonus)}.`;
   else if(c.streakBonus > 0){
     const need = 20 - run % 20;
@@ -815,6 +825,34 @@ function openRemind(){
   });
 }
 
+function bonusPotHTML(isP, ro, N){
+  const b = bonusBalance();
+  if(b === 0 && !S.tx.some(t=>inBonusPot(t))) return '';
+  return `<div class="bpot">
+    <div class="bpot-ic" aria-hidden="true">🎁</div>
+    <div class="bpot-t"><b>קופת הבונוסים: ${b<0?'−':''}₪${fmt(Math.abs(b))}</b>
+      <small>${b>0 ? (isP ? 'מחכה שתעביר לקופה הראשית' : `מחכה ש${esc(N.parent)} יעביר לקופה שלך`) : 'כל הבונוסים כבר עברו לקופה'}</small></div>
+    ${isP && !ro && b>0 ? `<button class="bpot-btn" data-a="transfer">העברה לקופה</button>` : ''}
+  </div>`;
+}
+function openTransfer(){
+  const b = bonusBalance(), N = names();
+  openSheet(`<h3>🎁 העברה לקופה הראשית</h3>
+    <p class="hint" style="margin:0 0 14px">בקופת הבונוסים יש ₪${fmt(b)}. הסכום שתעביר יתווסף לקופה של ${esc(N.child)}.</p>
+    <div class="field big"><label for="tam">כמה להעביר? (₪)</label><input id="tam" type="number" inputmode="decimal" min="0" step="0.5" value="${b}"></div>
+    <div class="err" id="ter"></div>
+    <button class="primary" id="tgo" style="background:var(--mint)">העברה לקופה</button>
+    <button class="ghost" data-close>ביטול</button>`, ()=>{
+    $('#tgo').onclick = async ()=>{
+      const v = Math.round((+$('#tam').value||0)*100)/100;
+      if(!(v>0)){ $('#ter').textContent = 'צריך סכום גדול מאפס'; return; }
+      if(v > b + 0.001){ $('#ter').textContent = `אפשר להעביר עד ₪${fmt(b)}`; return; }
+      if(await safe(()=>store.addTx({amount:v, type:'transfer', note:'העברה מקופת הבונוסים', by:'parent', ts:Date.now()}), `₪${fmt(v)} עברו לקופה של ${N.child} 🎉`)) closeSheet();
+    };
+    $('#tam').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#tgo').click(); });
+  });
+}
+
 function renderMain(){
   app.dataset.view = 'main';
   const N = names(), st = S.settings, bal = balance();
@@ -824,7 +862,7 @@ function renderMain(){
   const isP = role === 'parent', ro = !S.canWrite;
   const pending = S.req.filter(r=>r.status==='pending');
   const monthStart = new Date(); monthStart.setDate(1); monthStart.setHours(0,0,0,0);
-  const mIn = S.tx.filter(t=>t.ts>=monthStart && t.amount>0 && t.type!=='start').reduce((a,t)=>a+t.amount,0);
+  const mIn = S.tx.filter(t=>t.ts>=monthStart && t.amount>0 && t.type!=='start' && t.type!=='transfer').reduce((a,t)=>a+t.amount,0);
   const mOut = S.tx.filter(t=>t.ts>=monthStart && t.amount<0).reduce((a,t)=>a-t.amount,0);
 
   let goalLine = '';
@@ -867,6 +905,7 @@ function renderMain(){
     <div class="hero ${grew?'coin':''}">${jarSVG(fill)}
       <div class="bal"><div class="n" dir="ltr">${bal<0?'−':''}<small>₪</small>${fmt(Math.abs(bal))}</div><div class="l">${isP?'יש לה בקופה':'יש לי בקופה'}</div></div></div>
     <div class="goal">${goalLine}</div>
+    ${bonusPotHTML(isP, ro, N)}
     ${isP && !ro && allowanceDue() ? `<div class="banner"><span>הגיע הזמן לדמי הכיס<br><small style="font-weight:400">${scheduleText(st)}</small></span><button data-a="allow">להוסיף ₪${fmt(+st.weekly)}</button></div>`:''}
     <div class="actions">${actions}</div>
     ${(isP ? pending.length : S.req.length) ? `<h2>${isP?'בקשות שמחכות לך':'הבקשות שלי'}</h2><div class="list">${reqRows}</div>`:''}
@@ -926,6 +965,7 @@ document.addEventListener('keydown', e=>{ if(e.key==='Escape') closeSheet(); });
 
 function openAction(a){
   if(a==='remind') return openRemind();
+  if(a==='transfer') return openTransfer();
   if(a==='walkinfo') return openWalkInfo();
   const N = names(), st = S.settings, isP = role==='parent', by = isP?'parent':'child';
   if(a==='allow'){
@@ -950,7 +990,7 @@ function openAction(a){
   const cfg = {
     spend:{t: isP?'הוצאה מהקופה':'הוצאתי', btn:'רישום ההוצאה', sign:-1, type:'spend', cats:true, ph:'על מה?'},
     gift:{t: isP?'מתנה ממישהו אחר':'קיבלתי כסף', btn:'הוספה לקופה', sign:1, type:'gift', ph:'ממי? (למשל: סבתא)', hint: isP?'לא נספר בתקציב, כי זה לא כסף שנתת.':''},
-    bonus:{t:'בונוס / סכום אחר', btn:'הוספה לקופה', sign:1, type:'bonus', ph:'על מה? (למשל: עזרה בבית)'},
+    bonus:{t:'בונוס / סכום אחר', btn:'הוספה לקופת הבונוסים', sign:1, type:'bonus', ph:'על מה? (למשל: עזרה בבית)', hint:'הבונוס נכנס לקופת הבונוסים, ועובר לקופה הראשית כשתחליט.'},
     take:{t:'משיכה / תיקון', btn:'הורדה מהקופה', sign:-1, type:'take', ph:'סיבה'},
     ask:{t:'בקשה מ'+N.parent, btn:'שליחת הבקשה', sign:1, type:'ask', ph:'בשביל מה?'}
   }[a];
@@ -970,7 +1010,7 @@ function openAction(a){
       if(cfg.sign<0 && v>balance() && !isP){ if(!confirm('זה יותר ממה שיש בקופה. לרשום בכל זאת?')) return; }
       let ok;
       if(cfg.type==='ask') ok = await safe(()=>store.addReq({amount:v,note,status:'pending',ts:Date.now()}),'הבקשה נשלחה ל'+N.parent);
-      else ok = await safe(()=>store.addTx({amount:cfg.sign*v,type:cfg.type,note:note||(cfg.cats?(cat||''):''),cat:cat||null,by,ts:Date.now()}), cfg.sign>0?'נוסף לקופה':'נרשם');
+      else ok = await safe(()=>store.addTx({amount:cfg.sign*v,type:cfg.type,note:note||(cfg.cats?(cat||''):''),cat:cat||null,by,ts:Date.now(),...(cfg.type==='bonus'?{pot:'bonus'}:{})}), cfg.type==='bonus'?'נוסף לקופת הבונוסים':cfg.sign>0?'נוסף לקופה':'נרשם');
       if(ok) closeSheet();
     };
     $('#am').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#sv').click(); });
