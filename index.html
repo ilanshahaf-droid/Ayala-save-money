@@ -831,14 +831,14 @@ function bonusPotHTML(isP, ro, N){
   return `<div class="bpot">
     <div class="bpot-ic" aria-hidden="true">🎁</div>
     <div class="bpot-t"><b>קופת הבונוסים: ${b<0?'−':''}₪${fmt(Math.abs(b))}</b>
-      <small>${b>0 ? (isP ? 'מחכה שתעביר לקופה הראשית' : `מחכה ש${esc(N.parent)} יעביר לקופה שלך`) : 'כל הבונוסים כבר עברו לקופה'}</small></div>
-    ${isP && !ro && b>0 ? `<button class="bpot-btn" data-a="transfer">העברה לקופה</button>` : ''}
+      <small>${b>0 ? (isP ? 'מחכה להעברה לקופה הראשית' : 'אפשר להעביר לקופה שלך מתי שתרצי') : 'כל הבונוסים כבר עברו לקופה'}</small></div>
+    ${!ro && b>0 ? `<button class="bpot-btn" data-a="transfer">העברה לקופה</button>` : ''}
   </div>`;
 }
 function openTransfer(){
-  const b = bonusBalance(), N = names();
+  const b = bonusBalance(), N = names(), isP = role==='parent';
   openSheet(`<h3>🎁 העברה לקופה הראשית</h3>
-    <p class="hint" style="margin:0 0 14px">בקופת הבונוסים יש ₪${fmt(b)}. הסכום שתעביר יתווסף לקופה של ${esc(N.child)}.</p>
+    <p class="hint" style="margin:0 0 14px">בקופת הבונוסים יש ₪${fmt(b)}. ${isP ? `הסכום שתעביר יתווסף לקופה של ${esc(N.child)}.` : 'הסכום שתעבירי יתווסף לקופה שלך.'}</p>
     <div class="field big"><label for="tam">כמה להעביר? (₪)</label><input id="tam" type="number" inputmode="decimal" min="0" step="0.5" value="${b}"></div>
     <div class="err" id="ter"></div>
     <button class="primary" id="tgo" style="background:var(--mint)">העברה לקופה</button>
@@ -847,7 +847,7 @@ function openTransfer(){
       const v = Math.round((+$('#tam').value||0)*100)/100;
       if(!(v>0)){ $('#ter').textContent = 'צריך סכום גדול מאפס'; return; }
       if(v > b + 0.001){ $('#ter').textContent = `אפשר להעביר עד ₪${fmt(b)}`; return; }
-      if(await safe(()=>store.addTx({amount:v, type:'transfer', note:'העברה מקופת הבונוסים', by:'parent', ts:Date.now()}), `₪${fmt(v)} עברו לקופה של ${N.child} 🎉`)) closeSheet();
+      if(await safe(()=>store.addTx({amount:v, type:'transfer', note:'העברה מקופת הבונוסים', by:isP?'parent':'child', ts:Date.now()}), isP ? `₪${fmt(v)} עברו לקופה של ${N.child} 🎉` : `₪${fmt(v)} עברו לקופה שלך 🎉`)) closeSheet();
     };
     $('#tam').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#tgo').click(); });
   });
